@@ -11,11 +11,16 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import io
 
-# Import base optimization functionality
-from .bayesian_optimization_nodes import SKOPT_AVAILABLE
-
-if SKOPT_AVAILABLE:
+# Try to import optimization libraries
+try:
+    from skopt import gp_minimize
     from skopt.space import Real, Integer, Categorical
+    from skopt.utils import use_named_args
+    from skopt.acquisition import gaussian_ei
+    SKOPT_AVAILABLE = True
+except ImportError:
+    SKOPT_AVAILABLE = False
+    print("scikit-optimize not installed. Using basic optimization.")
 
 class EnhancedBayesianConfig:
     """Enhanced configuration for Flux-specific parameter optimization"""
@@ -509,10 +514,10 @@ class AestheticScorer:
                    sharpness_weight * sharpness + \
                    color_weight * color_harmony
         else:
-            # Use base scorer logic
-            from .bayesian_optimization_nodes import ImageSimilarityScorer
-            base_scorer = ImageSimilarityScorer()
-            score = base_scorer.calculate_similarity(generated_image, config)[0]
+            # Use metrics from metrics_universal
+            from .metrics_universal import UniversalMetrics
+            metrics = UniversalMetrics()
+            score = metrics.compute_similarity(generated_image, target_image, metric)
         
         return (float(score),)
     

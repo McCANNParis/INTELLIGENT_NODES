@@ -1,17 +1,19 @@
 """
 Bayesian Optimization Nodes for ComfyUI
-A comprehensive suite for optimizing Flux parameters using Bayesian methods
+A comprehensive suite for optimizing diffusion model parameters using Bayesian methods
+Works with image diffusion (SD, SDXL, Flux) and video diffusion models
 """
 
-# Import all node classes
-from .bayesian_optimization_nodes import (
-    BayesianOptimizerConfig,
-    BayesianParameterSampler,
-    ImageSimilarityScorer,
-    OptimizationVisualizer,
-    BayesianResultsExporter,
-)
+# Import unified system
+from .unified_nodes import NODE_CLASS_MAPPINGS as UNIFIED_MAPPINGS
+from .unified_nodes import NODE_DISPLAY_NAME_MAPPINGS as UNIFIED_DISPLAY
 
+# Legacy nodes have been removed - functionality replaced by universal system
+LEGACY_AVAILABLE = False
+
+# Basic optimization nodes removed - functionality moved to flux_bayesian_nodes
+
+# Import Flux-specific nodes
 from .flux_bayesian_nodes import (
     EnhancedBayesianConfig,
     EnhancedParameterSampler,
@@ -19,107 +21,132 @@ from .flux_bayesian_nodes import (
     OptimizationDashboard,
 )
 
-from .flux_adapter_nodes import (
-    PowerLoraAdapter,
-    ResolutionAdapter,
-    SchedulerAdapter,
-    SamplerAdapter,
-    OptimizationLoopController,
-    ParameterLogger,
-    BatchParameterGenerator,
-)
+# Import adapter nodes if available
+try:
+    from .flux_adapter_nodes import (
+        PowerLoraAdapter,
+        ResolutionAdapter,
+        SchedulerAdapter,
+        SamplerAdapter,
+        OptimizationLoopController,
+        ParameterLogger,
+        BatchParameterGenerator,
+    )
+    ADAPTERS_AVAILABLE = True
+except ImportError:
+    ADAPTERS_AVAILABLE = False
 
-from .visualization_export_nodes import (
-    ParameterHeatmap,
-    ConvergencePlot,
-    ParameterImportanceAnalysis,
-    OptimizationReport,
-    ParameterRecommendation,
-)
+# Visualization nodes removed - functionality integrated into flux_bayesian_nodes
+VIZ_AVAILABLE = False
 
-# Combine all node mappings
-NODE_CLASS_MAPPINGS = {
-    # Basic Bayesian optimization nodes
-    "BayesianOptimizerConfig": BayesianOptimizerConfig,
-    "BayesianParameterSampler": BayesianParameterSampler,
-    "ImageSimilarityScorer": ImageSimilarityScorer,
-    "OptimizationVisualizer": OptimizationVisualizer,
-    "BayesianResultsExporter": BayesianResultsExporter,
+# Start with unified mappings
+NODE_CLASS_MAPPINGS = UNIFIED_MAPPINGS.copy()
+NODE_DISPLAY_NAME_MAPPINGS = UNIFIED_DISPLAY.copy()
+
+# Add legacy nodes if available
+if LEGACY_AVAILABLE:
+    legacy_mappings = {
+        "BayesianParameterSpace": ParameterSpaceNode,
+        "BayesianOptimizer": BayesianOptimizerNode,
+        "BayesianMetricEvaluator": MetricEvaluatorNode,
+        "BayesianSampler": BayesianSamplerNode,
+        "BayesianHistoryLoader": BayesHistoryLoaderNode,
+        "BayesianHistorySaver": BayesHistorySaverNode,
+    }
     
-    # Enhanced Flux-specific nodes
+    legacy_display = {
+        "BayesianParameterSpace": "Parameter Space (Legacy)",
+        "BayesianOptimizer": "Bayesian Optimizer (Legacy)",
+        "BayesianMetricEvaluator": "Metric Evaluator (Legacy)",
+        "BayesianSampler": "Bayesian Sampler (Legacy)",
+        "BayesianHistoryLoader": "History Loader (Legacy)",
+        "BayesianHistorySaver": "History Saver (Legacy)",
+    }
+    
+    NODE_CLASS_MAPPINGS.update(legacy_mappings)
+    NODE_DISPLAY_NAME_MAPPINGS.update(legacy_display)
+
+# Basic optimization nodes removed - using enhanced versions only
+
+# Add Flux nodes
+flux_mappings = {
     "EnhancedBayesianConfig": EnhancedBayesianConfig,
     "EnhancedParameterSampler": EnhancedParameterSampler,
     "AestheticScorer": AestheticScorer,
     "OptimizationDashboard": OptimizationDashboard,
-    
-    # Adapter nodes
-    "PowerLoraAdapter": PowerLoraAdapter,
-    "ResolutionAdapter": ResolutionAdapter,
-    "SchedulerAdapter": SchedulerAdapter,
-    "SamplerAdapter": SamplerAdapter,
-    "OptimizationLoopController": OptimizationLoopController,
-    "ParameterLogger": ParameterLogger,
-    "BatchParameterGenerator": BatchParameterGenerator,
-    
-    # Visualization and export nodes
-    "ParameterHeatmap": ParameterHeatmap,
-    "ConvergencePlot": ConvergencePlot,
-    "ParameterImportanceAnalysis": ParameterImportanceAnalysis,
-    "OptimizationReport": OptimizationReport,
-    "ParameterRecommendation": ParameterRecommendation,
 }
 
-NODE_DISPLAY_NAME_MAPPINGS = {
-    # Basic nodes
-    "BayesianOptimizerConfig": "Bayesian Optimizer Config",
-    "BayesianParameterSampler": "Bayesian Parameter Sampler",
-    "ImageSimilarityScorer": "Image Similarity Scorer",
-    "OptimizationVisualizer": "Optimization Visualizer",
-    "BayesianResultsExporter": "Bayesian Results Exporter",
-    
-    # Enhanced nodes
-    "EnhancedBayesianConfig": "Enhanced Bayesian Config (Flux)",
-    "EnhancedParameterSampler": "Enhanced Parameter Sampler (Flux)",
+flux_display = {
+    "EnhancedBayesianConfig": "Enhanced Config (Flux)",
+    "EnhancedParameterSampler": "Enhanced Sampler (Flux)",
     "AestheticScorer": "Aesthetic Scorer",
     "OptimizationDashboard": "Optimization Dashboard",
-    
-    # Adapter nodes
-    "PowerLoraAdapter": "Power LoRA Adapter",
-    "ResolutionAdapter": "Resolution Adapter",
-    "SchedulerAdapter": "Scheduler Adapter",
-    "SamplerAdapter": "Sampler Adapter",
-    "OptimizationLoopController": "Optimization Loop Controller",
-    "ParameterLogger": "Parameter Logger",
-    "BatchParameterGenerator": "Batch Parameter Generator",
-    
-    # Visualization nodes
-    "ParameterHeatmap": "Parameter Heatmap",
-    "ConvergencePlot": "Convergence Plot",
-    "ParameterImportanceAnalysis": "Parameter Importance Analysis",
-    "OptimizationReport": "Optimization Report Generator",
-    "ParameterRecommendation": "Parameter Recommendation",
 }
 
+NODE_CLASS_MAPPINGS.update(flux_mappings)
+NODE_DISPLAY_NAME_MAPPINGS.update(flux_display)
+
+# Add adapter nodes if available
+if ADAPTERS_AVAILABLE:
+    adapter_mappings = {
+        "PowerLoraAdapter": PowerLoraAdapter,
+        "ResolutionAdapter": ResolutionAdapter,
+        "SchedulerAdapter": SchedulerAdapter,
+        "SamplerAdapter": SamplerAdapter,
+        "OptimizationLoopController": OptimizationLoopController,
+        "ParameterLogger": ParameterLogger,
+        "BatchParameterGenerator": BatchParameterGenerator,
+    }
+    
+    adapter_display = {
+        "PowerLoraAdapter": "Power LoRA Adapter",
+        "ResolutionAdapter": "Resolution Adapter",
+        "SchedulerAdapter": "Scheduler Adapter",
+        "SamplerAdapter": "Sampler Adapter",
+        "OptimizationLoopController": "Loop Controller",
+        "ParameterLogger": "Parameter Logger",
+        "BatchParameterGenerator": "Batch Generator",
+    }
+    
+    NODE_CLASS_MAPPINGS.update(adapter_mappings)
+    NODE_DISPLAY_NAME_MAPPINGS.update(adapter_display)
+
+# Visualization functionality is now integrated into flux_bayesian_nodes
+
 # Version info
-__version__ = "1.0.0"
-__author__ = "Bayesian Optimization for ComfyUI"
+__version__ = "2.0.0"
+__author__ = "Universal Bayesian Optimization for ComfyUI"
 
-print(f"Bayesian Optimization Nodes v{__version__} loaded successfully")
+print(f"\nBayesian Optimization Nodes v{__version__} loaded successfully")
 print(f"Total nodes available: {len(NODE_CLASS_MAPPINGS)}")
+print(f"Universal system: ✓")
+print(f"Legacy support: {'✓' if LEGACY_AVAILABLE else '✗'}")
+print(f"Adapters: {'✓' if ADAPTERS_AVAILABLE else '✗'}")
+print(f"Visualization: {'✓' if VIZ_AVAILABLE else '✗'}")
 
-# Optional: Check for required dependencies
+# Check for optional dependencies
 try:
     import skopt
-    print("scikit-optimize available - Full optimization features enabled")
+    print("\nscikit-optimize: ✓ (Full Bayesian optimization)")
 except ImportError:
-    print("Warning: scikit-optimize not installed - Using basic optimization")
-    print("Install with: pip install scikit-optimize")
+    print("\nscikit-optimize: ✗ (Install with: pip install scikit-optimize)")
 
 try:
     import scipy
-    print("scipy available - Advanced analysis features enabled")
+    print("scipy: ✓ (Advanced analysis)")
 except ImportError:
-    print("Warning: scipy not installed - Some analysis features disabled")
-    print("Install with: pip install scipy")
+    print("scipy: ✗ (Install with: pip install scipy)")
+
+try:
+    import lpips
+    print("LPIPS: ✓ (Perceptual similarity)")
+except ImportError:
+    print("LPIPS: ✗ (Install with: pip install lpips)")
+
+try:
+    import clip
+    print("CLIP: ✓ (Semantic similarity)")
+except ImportError:
+    print("CLIP: ✗ (Install with: pip install git+https://github.com/openai/CLIP.git)")
 
 __all__ = ['NODE_CLASS_MAPPINGS', 'NODE_DISPLAY_NAME_MAPPINGS']
