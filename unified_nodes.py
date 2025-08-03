@@ -15,7 +15,7 @@ from .core import (
     SimpleOptimizationRun
 )
 from .metrics_universal import MetricEvaluatorUniversal
-from .visualization_export_nodes import UniversalVisualizationNode, UniversalExportNode
+# Visualization nodes removed - functionality integrated into flux_bayesian_nodes
 
 
 # Auto-detection nodes
@@ -267,8 +267,6 @@ NODE_CLASS_MAPPINGS = {
     "BatchOptimizer": BatchOptimizer,
     
     # Visualization (from existing)
-    "UniversalVisualizationNode": UniversalVisualizationNode,
-    "UniversalExportNode": UniversalExportNode,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -290,6 +288,4 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "BatchOptimizer": "Batch Optimizer",
     
     # Visualization
-    "UniversalVisualizationNode": "Universal Visualization",
-    "UniversalExportNode": "Universal Export",
 }
