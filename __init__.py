@@ -19,6 +19,7 @@ from .flux_bayesian_nodes import (
     EnhancedParameterSampler,
     AestheticScorer,
     OptimizationDashboard,
+    BayesianResultsExporter,
 )
 
 # Import adapter nodes if available
@@ -74,6 +75,7 @@ flux_mappings = {
     "EnhancedParameterSampler": EnhancedParameterSampler,
     "AestheticScorer": AestheticScorer,
     "OptimizationDashboard": OptimizationDashboard,
+    "BayesianResultsExporter": BayesianResultsExporter,
 }
 
 flux_display = {
@@ -81,6 +83,7 @@ flux_display = {
     "EnhancedParameterSampler": "Enhanced Sampler (Flux)",
     "AestheticScorer": "Aesthetic Scorer",
     "OptimizationDashboard": "Optimization Dashboard",
+    "BayesianResultsExporter": "Results Exporter",
 }
 
 NODE_CLASS_MAPPINGS.update(flux_mappings)

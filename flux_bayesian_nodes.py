@@ -782,12 +782,106 @@ class OptimizationDashboard:
         
         return (torch.from_numpy(img_array).float() / 255.0,)
 
+
+class BayesianResultsExporter:
+    """Exports optimization results to various formats"""
+    
+    CATEGORY = "Bayesian/Results"
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "config": ("ENHANCED_BAYES_CONFIG",),
+                "filename_prefix": ("STRING", {
+                    "default": "bayesian_results",
+                    "multiline": False
+                }),
+            }
+        }
+    
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("results_summary",)
+    FUNCTION = "export_results"
+    OUTPUT_NODE = True
+    
+    def export_results(self, config, filename_prefix="bayesian_results"):
+        """Export optimization results to JSON and generate summary"""
+        import datetime
+        
+        # Extract history from config
+        history = config.get("history", [])
+        
+        if not history:
+            return ("No optimization history to export",)
+        
+        # Find best iteration
+        best_idx = np.argmax([h["score"] for h in history])
+        best_result = history[best_idx]
+        
+        # Create results dictionary
+        results = {
+            "timestamp": datetime.datetime.now().isoformat(),
+            "total_iterations": len(history),
+            "best_iteration": best_idx + 1,
+            "best_score": float(best_result["score"]),
+            "best_parameters": best_result["params"],
+            "optimization_config": {
+                "n_iterations": config.get("n_iterations", 0),
+                "metric": config.get("metric", "unknown"),
+                "seed_mode": config.get("seed_mode", "fixed"),
+            },
+            "history": history,
+            "convergence_info": {
+                "final_score": float(history[-1]["score"]),
+                "score_improvement": float(history[-1]["score"] - history[0]["score"]),
+                "converged": len(history) >= config.get("n_iterations", 0)
+            }
+        }
+        
+        # Save to JSON file
+        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        json_filename = f"{filename_prefix}_{timestamp}.json"
+        
+        try:
+            with open(json_filename, 'w') as f:
+                json.dump(results, f, indent=2)
+            
+            # Create summary text
+            summary = f"""
+Optimization Results Exported
+============================
+File: {json_filename}
+Timestamp: {results['timestamp']}
+
+Best Result (Iteration {best_idx + 1}/{len(history)}):
+  Score: {best_result['score']:.4f}
+  Guidance: {best_result['params'].get('guidance', 'N/A')}
+  Steps: {best_result['params'].get('steps', 'N/A')}
+  Scheduler: {best_result['params'].get('scheduler', 'N/A')}
+  Sampler: {best_result['params'].get('sampler', 'N/A')}
+
+Optimization Summary:
+  Total Iterations: {len(history)}
+  Initial Score: {history[0]['score']:.4f}
+  Final Score: {history[-1]['score']:.4f}
+  Improvement: {(history[-1]['score'] - history[0]['score']):.4f}
+  
+Results saved to: {json_filename}
+"""
+            return (summary,)
+            
+        except Exception as e:
+            return (f"Error exporting results: {str(e)}",)
+
+
 # Node class mappings
 NODE_CLASS_MAPPINGS = {
     "EnhancedBayesianConfig": EnhancedBayesianConfig,
     "EnhancedParameterSampler": EnhancedParameterSampler,
     "AestheticScorer": AestheticScorer,
     "OptimizationDashboard": OptimizationDashboard,
+    "BayesianResultsExporter": BayesianResultsExporter,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -795,4 +889,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "EnhancedParameterSampler": "Enhanced Parameter Sampler (Flux)",
     "AestheticScorer": "Aesthetic Scorer",
     "OptimizationDashboard": "Optimization Dashboard",
+    "BayesianResultsExporter": "Bayesian Results Exporter",
 }
