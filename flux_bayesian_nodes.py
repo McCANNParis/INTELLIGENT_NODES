@@ -954,12 +954,19 @@ class BayesianResultsExporter:
             }
         }
         
-        # Save to JSON file
+        # Save to JSON file in ComfyUI output directory
+        import os
+        import folder_paths
+        
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         json_filename = f"{filename_prefix}_{timestamp}.json"
         
+        # Get ComfyUI output directory
+        output_dir = folder_paths.get_output_directory()
+        full_path = os.path.join(output_dir, json_filename)
+        
         try:
-            with open(json_filename, 'w') as f:
+            with open(full_path, 'w') as f:
                 json.dump(results, f, indent=2)
             
             # Create summary text
@@ -967,6 +974,7 @@ class BayesianResultsExporter:
 Optimization Results Exported
 ============================
 File: {json_filename}
+Full Path: {full_path}
 Timestamp: {results['timestamp']}
 
 Best Result (Iteration {best_idx + 1}/{len(history)}):
@@ -982,7 +990,7 @@ Optimization Summary:
   Final Score: {history[-1]['score']:.4f}
   Improvement: {(history[-1]['score'] - history[0]['score']):.4f}
   
-Results saved to: {json_filename}
+Results saved to: {full_path}
 """
             return (summary,)
             
