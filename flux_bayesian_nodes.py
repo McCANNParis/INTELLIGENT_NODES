@@ -783,6 +783,35 @@ class OptimizationDashboard:
         return (torch.from_numpy(img_array).float() / 255.0,)
 
 
+class ConditionalBranch:
+    """Conditional branching for workflow control"""
+    
+    CATEGORY = "Bayesian/Control"
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "condition": ("BOOLEAN",),
+            },
+            "optional": {
+                "true_value": ("*",),
+                "false_value": ("*",),
+            }
+        }
+    
+    RETURN_TYPES = ("*", "*")
+    RETURN_NAMES = ("true_output", "false_output")
+    FUNCTION = "branch"
+    
+    def branch(self, condition, true_value=None, false_value=None):
+        """Branch based on condition"""
+        if condition:
+            return (true_value, None)
+        else:
+            return (None, false_value)
+
+
 class BayesianResultsExporter:
     """Exports optimization results to various formats"""
     
@@ -881,6 +910,7 @@ NODE_CLASS_MAPPINGS = {
     "EnhancedParameterSampler": EnhancedParameterSampler,
     "AestheticScorer": AestheticScorer,
     "OptimizationDashboard": OptimizationDashboard,
+    "ConditionalBranch": ConditionalBranch,
     "BayesianResultsExporter": BayesianResultsExporter,
 }
 
@@ -889,5 +919,6 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "EnhancedParameterSampler": "Enhanced Parameter Sampler (Flux)",
     "AestheticScorer": "Aesthetic Scorer",
     "OptimizationDashboard": "Optimization Dashboard",
+    "ConditionalBranch": "Conditional Branch",
     "BayesianResultsExporter": "Bayesian Results Exporter",
 }
