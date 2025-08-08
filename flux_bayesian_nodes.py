@@ -153,8 +153,11 @@ class EnhancedParameterSampler:
         return {
             "required": {
                 "config": ("ENHANCED_BAYESIAN_CONFIG",),
-                "similarity_score": ("FLOAT", {"default": 0.0}),
+                "similarity_score": ("FLOAT", {"default": 0.0, "min": 0.0, "max": 1.0, "step": 0.01}),
                 "is_first_run": ("BOOLEAN", {"default": True}),
+            },
+            "optional": {
+                "previous_image": ("IMAGE",),  # For scoring feedback
             }
         }
     
@@ -171,11 +174,23 @@ class EnhancedParameterSampler:
         self.current_params = None
         self.gp_model = None
     
-    def sample_parameters(self, config, similarity_score, is_first_run):
+    def sample_parameters(self, config, similarity_score, is_first_run, previous_image=None):
         # Generate a unique ID for this optimization based on config
         import hashlib
+        import os
+        import pickle
+        
         config_str = f"{config.get('fixed_prompt', '')}_{config.get('n_iterations', 0)}_{config.get('optimization_seed', 0)}"
         opt_id = hashlib.md5(config_str.encode()).hexdigest()[:8]
+        
+        # Create a state file path
+        try:
+            import folder_paths
+            temp_dir = folder_paths.get_temp_directory()
+        except:
+            temp_dir = "/tmp"
+        
+        state_file = os.path.join(temp_dir, f"bayesian_opt_{opt_id}.pkl")
         
         print(f"\n=== EnhancedParameterSampler ===")
         print(f"Optimization ID: {opt_id}")
@@ -184,19 +199,31 @@ class EnhancedParameterSampler:
         print(f"Config iteration: {config.get('iteration', 0)}")
         print(f"Config history length: {len(config.get('history', []))}")
         
-        # Check if this is actually the first run based on state, not just the flag
-        actual_first_run = opt_id not in EnhancedParameterSampler._optimization_state
+        # Try to load existing state from file
+        state = None
+        if os.path.exists(state_file) and not is_first_run:
+            try:
+                with open(state_file, 'rb') as f:
+                    state = pickle.load(f)
+                print(f"Loaded existing state from {state_file}")
+                print(f"Loaded state: iteration {state['iteration']}, history length {len(state['history'])}")
+            except Exception as e:
+                print(f"Error loading state: {e}")
+                state = None
         
-        # Initialize or retrieve optimization state
-        if actual_first_run:
-            print(f"First run detected - initializing new optimization with ID: {opt_id}")
-            EnhancedParameterSampler._optimization_state[opt_id] = {
+        # Initialize new state if needed
+        if state is None or is_first_run:
+            if is_first_run and os.path.exists(state_file):
+                os.remove(state_file)
+                print(f"Removed old state file for fresh start")
+            
+            print(f"Initializing new optimization with ID: {opt_id}")
+            state = {
                 "history": [],
                 "iteration": 0,
                 "best_params": None,
                 "best_score": float('-inf'),
                 "current_params": None,
-                "gp_model": None,
                 "run_count": 0
             }
             # Reset config history for new optimization
@@ -205,25 +232,8 @@ class EnhancedParameterSampler:
             config["best_params"] = None
             config["best_score"] = float('-inf')
         
-        # Special case: if is_first_run is true but we already have state, reset it
-        elif is_first_run and EnhancedParameterSampler._optimization_state[opt_id]["run_count"] > 0:
-            print(f"Reset requested - clearing optimization {opt_id}")
-            EnhancedParameterSampler._optimization_state[opt_id] = {
-                "history": [],
-                "iteration": 0,
-                "best_params": None,
-                "best_score": float('-inf'),
-                "current_params": None,
-                "gp_model": None,
-                "run_count": 0
-            }
-            config["history"] = []
-            config["iteration"] = 0
-            config["best_params"] = None
-            config["best_score"] = float('-inf')
-        
-        # Get state for this optimization
-        state = EnhancedParameterSampler._optimization_state[opt_id]
+        # Store state in class variable too (for within-session persistence)
+        EnhancedParameterSampler._optimization_state[opt_id] = state
         
         # Sync config with persistent state
         config["history"] = state["history"]
@@ -278,6 +288,23 @@ class EnhancedParameterSampler:
         state["iteration"] = config["iteration"]
         
         print(f"Sampled params for iteration {config['iteration']}: guidance={params.get('guidance', 'N/A'):.2f}, steps={params.get('steps', 'N/A')}")
+        
+        # Save state to file for persistence across runs
+        try:
+            with open(state_file, 'wb') as f:
+                # Create a clean state dict without unpickleable objects
+                save_state = {
+                    "history": state["history"],
+                    "iteration": state["iteration"],
+                    "best_params": state["best_params"],
+                    "best_score": state["best_score"],
+                    "current_params": state["current_params"],
+                    "run_count": state["run_count"]
+                }
+                pickle.dump(save_state, f)
+                print(f"Saved state to {state_file}")
+        except Exception as e:
+            print(f"Error saving state: {e}")
         
         return self._return_params(params, config, False)
     
