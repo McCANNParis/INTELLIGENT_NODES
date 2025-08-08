@@ -314,12 +314,19 @@ class EnhancedParameterSampler:
             # Use Sobol-like sequence for better coverage
             t = config["iteration"] / max(1, config["n_initial_points"] - 1)
             
-            # Continuous parameters
-            guidance = config["space"]["guidance"][0] + \
-                      t * (config["space"]["guidance"][1] - config["space"]["guidance"][0])
+            # Handle different space formats (list vs dict)
+            if isinstance(config["space"], list):
+                # scikit-optimize format (list of Dimension objects)
+                guidance_min, guidance_max = config["space"][0].low, config["space"][0].high
+                steps_min, steps_max = config["space"][1].low, config["space"][1].high
+            else:
+                # Dictionary format with tuples
+                guidance_min, guidance_max = config["space"]["guidance"]
+                steps_min, steps_max = config["space"]["steps"]
             
-            steps = int(config["space"]["steps"][0] + \
-                       t * (config["space"]["steps"][1] - config["space"]["steps"][0]))
+            # Continuous parameters
+            guidance = guidance_min + t * (guidance_max - guidance_min)
+            steps = int(steps_min + t * (steps_max - steps_min))
             
             # Categorical parameters - cycle through options
             scheduler_idx = config["iteration"] % len(config["param_names"]["schedulers"])
@@ -336,10 +343,21 @@ class EnhancedParameterSampler:
             
             # LoRA weights - use different patterns
             for i in range(config["num_loras"]):
-                weight_range = config["space"][f"lora{i+1}_weight"]
+                if isinstance(config["space"], list):
+                    # Find the LoRA weight dimension in the list
+                    lora_idx = 5 + i  # After guidance, steps, scheduler, sampler, ratio
+                    if lora_idx < len(config["space"]):
+                        weight_min = config["space"][lora_idx].low
+                        weight_max = config["space"][lora_idx].high
+                    else:
+                        weight_min, weight_max = 0.0, 1.0
+                else:
+                    # Dictionary format
+                    weight_range = config["space"].get(f"lora{i+1}_weight", (0.0, 1.0))
+                    weight_min, weight_max = weight_range
                 # Use sinusoidal pattern for diversity
                 phase = (config["iteration"] + i * 7) / config["n_initial_points"]
-                weight = weight_range[0] + (weight_range[1] - weight_range[0]) * \
+                weight = weight_min + (weight_max - weight_min) * \
                         (0.5 + 0.5 * np.sin(2 * np.pi * phase))
                 params[f"lora{i+1}_weight"] = float(weight)
         else:
@@ -348,18 +366,24 @@ class EnhancedParameterSampler:
                 # Add noise to best params
                 variance_factor = 1 - config["iteration"] / config["n_iterations"]
                 
+                # Get space bounds
+                if isinstance(config["space"], list):
+                    guidance_min, guidance_max = config["space"][0].low, config["space"][0].high
+                    steps_min, steps_max = config["space"][1].low, config["space"][1].high
+                else:
+                    guidance_min, guidance_max = config["space"]["guidance"]
+                    steps_min, steps_max = config["space"]["steps"]
+                
                 params = {
                     "guidance": np.clip(
                         config["best_params"]["guidance"] + 
                         np.random.normal(0, 1.0 * variance_factor),
-                        config["space"]["guidance"][0],
-                        config["space"]["guidance"][1]
+                        guidance_min, guidance_max
                     ),
                     "steps": np.clip(
                         int(config["best_params"]["steps"] + 
                             np.random.normal(0, 5 * variance_factor)),
-                        config["space"]["steps"][0],
-                        config["space"]["steps"][1]
+                        steps_min, steps_max
                     )
                 }
                 
@@ -381,11 +405,21 @@ class EnhancedParameterSampler:
                 
                 # LoRA weights
                 for i in range(config["num_loras"]):
-                    weight_range = config["space"][f"lora{i+1}_weight"]
+                    if isinstance(config["space"], list):
+                        lora_idx = 5 + i
+                        if lora_idx < len(config["space"]):
+                            weight_min = config["space"][lora_idx].low
+                            weight_max = config["space"][lora_idx].high
+                        else:
+                            weight_min, weight_max = 0.0, 1.0
+                    else:
+                        weight_range = config["space"].get(f"lora{i+1}_weight", (0.0, 1.0))
+                        weight_min, weight_max = weight_range
+                    
                     params[f"lora{i+1}_weight"] = np.clip(
-                        config["best_params"][f"lora{i+1}_weight"] +
+                        config["best_params"].get(f"lora{i+1}_weight", 0.5) +
                         np.random.normal(0, 0.2 * variance_factor),
-                        weight_range[0], weight_range[1]
+                        weight_min, weight_max
                     )
             else:
                 # Random sampling
@@ -394,10 +428,18 @@ class EnhancedParameterSampler:
         # Handle seed
         if config["optimize_seed"]:
             if config["iteration"] < config["n_initial_points"]:
-                params["seed"] = np.random.randint(
-                    config["space"]["seed"][0],
-                    config["space"]["seed"][1]
-                )
+                if isinstance(config["space"], list):
+                    # Find seed dimension in list
+                    seed_idx = 5 + config["num_loras"]
+                    if seed_idx < len(config["space"]):
+                        seed_min = config["space"][seed_idx].low
+                        seed_max = config["space"][seed_idx].high
+                    else:
+                        seed_min, seed_max = 0, 1000000
+                else:
+                    seed_range = config["space"].get("seed", (0, 1000000))
+                    seed_min, seed_max = seed_range
+                params["seed"] = np.random.randint(seed_min, seed_max + 1)
             else:
                 params["seed"] = config["optimization_seed"] + config["iteration"]
         else:
@@ -407,23 +449,34 @@ class EnhancedParameterSampler:
     
     def _get_random_params(self, config):
         """Get random parameters"""
+        # Get space bounds
+        if isinstance(config["space"], list):
+            guidance_min, guidance_max = config["space"][0].low, config["space"][0].high
+            steps_min, steps_max = config["space"][1].low, config["space"][1].high
+        else:
+            guidance_min, guidance_max = config["space"]["guidance"]
+            steps_min, steps_max = config["space"]["steps"]
+        
         params = {
-            "guidance": np.random.uniform(
-                config["space"]["guidance"][0],
-                config["space"]["guidance"][1]
-            ),
-            "steps": np.random.randint(
-                config["space"]["steps"][0],
-                config["space"]["steps"][1] + 1
-            ),
+            "guidance": np.random.uniform(guidance_min, guidance_max),
+            "steps": np.random.randint(steps_min, steps_max + 1),
             "scheduler": np.random.choice(config["param_names"]["schedulers"]),
             "sampler": np.random.choice(config["param_names"]["samplers"]),
             "resolution_ratio": np.random.choice(config["param_names"]["ratios"]),
         }
         
         for i in range(config["num_loras"]):
-            weight_range = config["space"][f"lora{i+1}_weight"]
-            params[f"lora{i+1}_weight"] = np.random.uniform(weight_range[0], weight_range[1])
+            if isinstance(config["space"], list):
+                lora_idx = 5 + i
+                if lora_idx < len(config["space"]):
+                    weight_min = config["space"][lora_idx].low
+                    weight_max = config["space"][lora_idx].high
+                else:
+                    weight_min, weight_max = 0.0, 1.0
+            else:
+                weight_range = config["space"].get(f"lora{i+1}_weight", (0.0, 1.0))
+                weight_min, weight_max = weight_range
+            params[f"lora{i+1}_weight"] = np.random.uniform(weight_min, weight_max)
         
         return params
     
