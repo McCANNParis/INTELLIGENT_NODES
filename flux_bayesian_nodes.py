@@ -177,18 +177,46 @@ class EnhancedParameterSampler:
         config_str = f"{config.get('fixed_prompt', '')}_{config.get('n_iterations', 0)}_{config.get('optimization_seed', 0)}"
         opt_id = hashlib.md5(config_str.encode()).hexdigest()[:8]
         
+        print(f"\n=== EnhancedParameterSampler ===")
+        print(f"Optimization ID: {opt_id}")
+        print(f"is_first_run: {is_first_run}")
+        print(f"similarity_score: {similarity_score}")
+        print(f"Config iteration: {config.get('iteration', 0)}")
+        print(f"Config history length: {len(config.get('history', []))}")
+        
+        # Check if this is actually the first run based on state, not just the flag
+        actual_first_run = opt_id not in EnhancedParameterSampler._optimization_state
+        
         # Initialize or retrieve optimization state
-        if is_first_run or opt_id not in EnhancedParameterSampler._optimization_state:
-            print(f"Initializing new optimization with ID: {opt_id}")
+        if actual_first_run:
+            print(f"First run detected - initializing new optimization with ID: {opt_id}")
             EnhancedParameterSampler._optimization_state[opt_id] = {
                 "history": [],
                 "iteration": 0,
                 "best_params": None,
                 "best_score": float('-inf'),
                 "current_params": None,
-                "gp_model": None
+                "gp_model": None,
+                "run_count": 0
             }
             # Reset config history for new optimization
+            config["history"] = []
+            config["iteration"] = 0
+            config["best_params"] = None
+            config["best_score"] = float('-inf')
+        
+        # Special case: if is_first_run is true but we already have state, reset it
+        elif is_first_run and EnhancedParameterSampler._optimization_state[opt_id]["run_count"] > 0:
+            print(f"Reset requested - clearing optimization {opt_id}")
+            EnhancedParameterSampler._optimization_state[opt_id] = {
+                "history": [],
+                "iteration": 0,
+                "best_params": None,
+                "best_score": float('-inf'),
+                "current_params": None,
+                "gp_model": None,
+                "run_count": 0
+            }
             config["history"] = []
             config["iteration"] = 0
             config["best_params"] = None
@@ -203,10 +231,13 @@ class EnhancedParameterSampler:
         config["best_params"] = state["best_params"]
         config["best_score"] = state["best_score"]
         
-        print(f"Optimization {opt_id}: iteration {config['iteration']}, history length: {len(config['history'])}")
+        # Increment run count
+        state["run_count"] = state.get("run_count", 0) + 1
         
-        # Update history if not first run and we have previous params
-        if not is_first_run and state["current_params"] is not None:
+        print(f"Optimization {opt_id}: iteration {config['iteration']}, history length: {len(config['history'])}, run #{state['run_count']}")
+        
+        # Update history if not the actual first run and we have previous params
+        if state["run_count"] > 1 and state["current_params"] is not None:
             config["history"].append({
                 "params": state["current_params"],
                 "score": similarity_score,
@@ -1066,8 +1097,21 @@ class BayesianResultsExporter:
         full_path = os.path.join(output_dir, json_filename)
         
         try:
+            # Use a custom JSON encoder to handle any remaining numpy types
+            class NumpyEncoder(json.JSONEncoder):
+                def default(self, obj):
+                    if isinstance(obj, (np.integer, np.int64, np.int32)):
+                        return int(obj)
+                    elif isinstance(obj, (np.floating, np.float64, np.float32)):
+                        return float(obj)
+                    elif isinstance(obj, np.bool_):
+                        return bool(obj)
+                    elif isinstance(obj, np.ndarray):
+                        return obj.tolist()
+                    return super().default(obj)
+            
             with open(full_path, 'w') as f:
-                json.dump(results, f, indent=2)
+                json.dump(results, f, indent=2, cls=NumpyEncoder)
             print(f"Results saved to: {full_path}")
             
             # Create summary text
