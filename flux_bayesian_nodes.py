@@ -144,6 +144,10 @@ class EnhancedBayesianConfig:
 class EnhancedParameterSampler:
     """Enhanced parameter sampler for Flux workflows"""
     
+    # Class-level storage for persistent state across runs
+    _optimization_state = {}
+    _current_optimization_id = None
+    
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -168,22 +172,60 @@ class EnhancedParameterSampler:
         self.gp_model = None
     
     def sample_parameters(self, config, similarity_score, is_first_run):
-        # Update history if not first run
-        if not is_first_run and self.current_params is not None:
+        # Generate a unique ID for this optimization based on config
+        import hashlib
+        config_str = f"{config.get('fixed_prompt', '')}_{config.get('n_iterations', 0)}_{config.get('optimization_seed', 0)}"
+        opt_id = hashlib.md5(config_str.encode()).hexdigest()[:8]
+        
+        # Initialize or retrieve optimization state
+        if is_first_run or opt_id not in EnhancedParameterSampler._optimization_state:
+            print(f"Initializing new optimization with ID: {opt_id}")
+            EnhancedParameterSampler._optimization_state[opt_id] = {
+                "history": [],
+                "iteration": 0,
+                "best_params": None,
+                "best_score": float('-inf'),
+                "current_params": None,
+                "gp_model": None
+            }
+            # Reset config history for new optimization
+            config["history"] = []
+            config["iteration"] = 0
+            config["best_params"] = None
+            config["best_score"] = float('-inf')
+        
+        # Get state for this optimization
+        state = EnhancedParameterSampler._optimization_state[opt_id]
+        
+        # Sync config with persistent state
+        config["history"] = state["history"]
+        config["iteration"] = state["iteration"]
+        config["best_params"] = state["best_params"]
+        config["best_score"] = state["best_score"]
+        
+        print(f"Optimization {opt_id}: iteration {config['iteration']}, history length: {len(config['history'])}")
+        
+        # Update history if not first run and we have previous params
+        if not is_first_run and state["current_params"] is not None:
             config["history"].append({
-                "params": self.current_params,
+                "params": state["current_params"],
                 "score": similarity_score,
                 "iteration": config["iteration"]
             })
+            state["history"] = config["history"]
             
             # Update best parameters
             if similarity_score > config["best_score"]:
                 config["best_score"] = similarity_score
-                config["best_params"] = self.current_params.copy()
+                config["best_params"] = state["current_params"].copy()
+                state["best_score"] = config["best_score"]
+                state["best_params"] = config["best_params"]
+                print(f"New best score: {similarity_score:.4f}")
         
         # Check if optimization is complete
         if config["iteration"] >= config["n_iterations"]:
             if config["best_params"] is not None:
+                print(f"Optimization complete! Best score: {config['best_score']:.4f}")
                 return self._return_params(config["best_params"], config, True)
             else:
                 # Return defaults
@@ -196,8 +238,15 @@ class EnhancedParameterSampler:
         else:
             params = self._sample_enhanced(config)
         
+        # Store current params in both instance and class state
         self.current_params = params
+        state["current_params"] = params
+        
+        # Update iteration counter
         config["iteration"] += 1
+        state["iteration"] = config["iteration"]
+        
+        print(f"Sampled params for iteration {config['iteration']}: guidance={params.get('guidance', 'N/A'):.2f}, steps={params.get('steps', 'N/A')}")
         
         return self._return_params(params, config, False)
     
@@ -943,16 +992,20 @@ class BayesianResultsExporter:
         
         # Helper function to convert numpy types to native Python types
         def convert_to_native(obj):
-            if isinstance(obj, np.integer):
+            if isinstance(obj, (np.integer, np.int64, np.int32)):
                 return int(obj)
-            elif isinstance(obj, np.floating):
+            elif isinstance(obj, (np.floating, np.float64, np.float32)):
                 return float(obj)
+            elif isinstance(obj, np.bool_):
+                return bool(obj)
             elif isinstance(obj, np.ndarray):
                 return obj.tolist()
             elif isinstance(obj, dict):
                 return {k: convert_to_native(v) for k, v in obj.items()}
             elif isinstance(obj, list):
                 return [convert_to_native(item) for item in obj]
+            elif isinstance(obj, tuple):
+                return tuple(convert_to_native(item) for item in obj)
             else:
                 return obj
         
