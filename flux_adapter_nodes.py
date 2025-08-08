@@ -72,7 +72,7 @@ class ResolutionAdapter:
         return {
             "required": {
                 "resolution_ratio": ("STRING", {"default": "1:1"}),
-                "base_resolution": ("INT", {"default": 1024, "min": 512, "max": 2048}),
+                "base_resolution": ("INT", {"default": 1024, "min": 1, "max": 2048}),
             },
             "optional": {
                 "force_multiple": ("INT", {"default": 64, "min": 8, "max": 128}),

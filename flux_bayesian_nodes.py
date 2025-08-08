@@ -854,7 +854,7 @@ class BayesianResultsExporter:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "config": ("ENHANCED_BAYES_CONFIG",),
+                "config": ("ENHANCED_BAYESIAN_CONFIG",),
                 "filename_prefix": ("STRING", {
                     "default": "bayesian_results",
                     "multiline": False
