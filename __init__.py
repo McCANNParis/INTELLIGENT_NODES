@@ -19,6 +19,7 @@ from .flux_bayesian_nodes import (
     EnhancedParameterSampler,
     AestheticScorer,
     OptimizationDashboard,
+    IterationCounter,
     ConditionalBranch,
     BayesianResultsExporter,
 )
@@ -76,6 +77,7 @@ flux_mappings = {
     "EnhancedParameterSampler": EnhancedParameterSampler,
     "AestheticScorer": AestheticScorer,
     "OptimizationDashboard": OptimizationDashboard,
+    "IterationCounter": IterationCounter,
     "ConditionalBranch": ConditionalBranch,
     "BayesianResultsExporter": BayesianResultsExporter,
 }
@@ -85,6 +87,7 @@ flux_display = {
     "EnhancedParameterSampler": "Enhanced Sampler (Flux)",
     "AestheticScorer": "Aesthetic Scorer",
     "OptimizationDashboard": "Optimization Dashboard",
+    "IterationCounter": "Iteration Counter",
     "ConditionalBranch": "Conditional Branch",
     "BayesianResultsExporter": "Results Exporter",
 }

@@ -783,6 +783,39 @@ class OptimizationDashboard:
         return (torch.from_numpy(img_array).float() / 255.0,)
 
 
+class IterationCounter:
+    """Simple iteration counter for optimization loops"""
+    
+    CATEGORY = "Bayesian/Control"
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "start_value": ("INT", {"default": 0, "min": 0, "max": 10000}),
+                "increment": ("INT", {"default": 1, "min": 1, "max": 100}),
+            },
+            "optional": {
+                "reset": ("BOOLEAN", {"default": False}),
+            }
+        }
+    
+    RETURN_TYPES = ("INT",)
+    RETURN_NAMES = ("count",)
+    FUNCTION = "count"
+    
+    def __init__(self):
+        self.counter = 0
+    
+    def count(self, start_value, increment, reset=False):
+        """Increment counter"""
+        if reset:
+            self.counter = start_value
+        else:
+            self.counter += increment
+        return (self.counter,)
+
+
 class ConditionalBranch:
     """Conditional branching for workflow control"""
     
@@ -910,6 +943,7 @@ NODE_CLASS_MAPPINGS = {
     "EnhancedParameterSampler": EnhancedParameterSampler,
     "AestheticScorer": AestheticScorer,
     "OptimizationDashboard": OptimizationDashboard,
+    "IterationCounter": IterationCounter,
     "ConditionalBranch": ConditionalBranch,
     "BayesianResultsExporter": BayesianResultsExporter,
 }
@@ -919,6 +953,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "EnhancedParameterSampler": "Enhanced Parameter Sampler (Flux)",
     "AestheticScorer": "Aesthetic Scorer",
     "OptimizationDashboard": "Optimization Dashboard",
+    "IterationCounter": "Iteration Counter",
     "ConditionalBranch": "Conditional Branch",
     "BayesianResultsExporter": "Bayesian Results Exporter",
 }
