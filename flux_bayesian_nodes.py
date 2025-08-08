@@ -924,11 +924,18 @@ class BayesianResultsExporter:
         """Export optimization results to JSON and generate summary"""
         import datetime
         
+        # Debug print
+        print(f"BayesianResultsExporter called with prefix: {filename_prefix}")
+        print(f"Config keys: {config.keys() if isinstance(config, dict) else 'Not a dict'}")
+        
         # Extract history from config
         history = config.get("history", [])
         
+        print(f"History length: {len(history)}")
+        
         if not history:
-            return ("No optimization history to export",)
+            print("Warning: No optimization history to export")
+            return ("No optimization history to export - make sure to run multiple iterations with is_first_run=false after the initial run",)
         
         # Find best iteration
         best_idx = np.argmax([h["score"] for h in history])
@@ -956,18 +963,32 @@ class BayesianResultsExporter:
         
         # Save to JSON file in ComfyUI output directory
         import os
-        import folder_paths
         
         timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         json_filename = f"{filename_prefix}_{timestamp}.json"
         
-        # Get ComfyUI output directory
-        output_dir = folder_paths.get_output_directory()
+        # Try to get ComfyUI output directory, with fallback
+        try:
+            import folder_paths
+            output_dir = folder_paths.get_output_directory()
+        except (ImportError, AttributeError) as e:
+            # Fallback to common paths
+            if os.path.exists("/workspace/ComfyUI/output"):
+                output_dir = "/workspace/ComfyUI/output"
+            elif os.path.exists("output"):
+                output_dir = "output"
+            else:
+                output_dir = "."
+            print(f"Warning: Could not import folder_paths, using fallback: {output_dir}")
+        
+        # Ensure directory exists
+        os.makedirs(output_dir, exist_ok=True)
         full_path = os.path.join(output_dir, json_filename)
         
         try:
             with open(full_path, 'w') as f:
                 json.dump(results, f, indent=2)
+            print(f"Results saved to: {full_path}")
             
             # Create summary text
             summary = f"""
