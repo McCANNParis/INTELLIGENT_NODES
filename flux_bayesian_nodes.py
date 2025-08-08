@@ -941,19 +941,46 @@ class BayesianResultsExporter:
         best_idx = np.argmax([h["score"] for h in history])
         best_result = history[best_idx]
         
-        # Create results dictionary
+        # Helper function to convert numpy types to native Python types
+        def convert_to_native(obj):
+            if isinstance(obj, np.integer):
+                return int(obj)
+            elif isinstance(obj, np.floating):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            elif isinstance(obj, dict):
+                return {k: convert_to_native(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_to_native(item) for item in obj]
+            else:
+                return obj
+        
+        # Convert best_result params to native types
+        best_params_native = convert_to_native(best_result["params"])
+        
+        # Convert history to native types
+        history_native = []
+        for h in history:
+            history_native.append({
+                "params": convert_to_native(h["params"]),
+                "score": float(h["score"]),
+                "iteration": int(h.get("iteration", 0))
+            })
+        
+        # Create results dictionary with native types
         results = {
             "timestamp": datetime.datetime.now().isoformat(),
-            "total_iterations": len(history),
-            "best_iteration": best_idx + 1,
+            "total_iterations": int(len(history)),
+            "best_iteration": int(best_idx + 1),
             "best_score": float(best_result["score"]),
-            "best_parameters": best_result["params"],
+            "best_parameters": best_params_native,
             "optimization_config": {
-                "n_iterations": config.get("n_iterations", 0),
-                "metric": config.get("metric", "unknown"),
-                "seed_mode": config.get("seed_mode", "fixed"),
+                "n_iterations": int(config.get("n_iterations", 0)),
+                "metric": str(config.get("similarity_metric", "unknown")),
+                "optimize_seed": bool(config.get("optimize_seed", False)),
             },
-            "history": history,
+            "history": history_native,
             "convergence_info": {
                 "final_score": float(history[-1]["score"]),
                 "score_improvement": float(history[-1]["score"] - history[0]["score"]),
@@ -998,18 +1025,18 @@ File: {json_filename}
 Full Path: {full_path}
 Timestamp: {results['timestamp']}
 
-Best Result (Iteration {best_idx + 1}/{len(history)}):
-  Score: {best_result['score']:.4f}
-  Guidance: {best_result['params'].get('guidance', 'N/A')}
-  Steps: {best_result['params'].get('steps', 'N/A')}
-  Scheduler: {best_result['params'].get('scheduler', 'N/A')}
-  Sampler: {best_result['params'].get('sampler', 'N/A')}
+Best Result (Iteration {int(best_idx + 1)}/{len(history)}):
+  Score: {float(best_result['score']):.4f}
+  Guidance: {best_params_native.get('guidance', 'N/A')}
+  Steps: {best_params_native.get('steps', 'N/A')}
+  Scheduler: {best_params_native.get('scheduler', 'N/A')}
+  Sampler: {best_params_native.get('sampler', 'N/A')}
 
 Optimization Summary:
   Total Iterations: {len(history)}
-  Initial Score: {history[0]['score']:.4f}
-  Final Score: {history[-1]['score']:.4f}
-  Improvement: {(history[-1]['score'] - history[0]['score']):.4f}
+  Initial Score: {float(history[0]['score']):.4f}
+  Final Score: {float(history[-1]['score']):.4f}
+  Improvement: {float(history[-1]['score'] - history[0]['score']):.4f}
   
 Results saved to: {full_path}
 """
