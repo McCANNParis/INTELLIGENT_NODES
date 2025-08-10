@@ -390,8 +390,7 @@ class EnhancedParameterSampler:
         
         # Evaluate acquisition function
         candidates = np.array(candidates)
-        mu, std = gp_model.predict(candidates, return_std=True)
-        acquisition_values = gaussian_ei(mu, std, np.min(y))
+        acquisition_values = gaussian_ei(candidates, gp_model, np.min(y))
         
         # Select best candidate
         best_idx = np.argmax(acquisition_values)
