@@ -170,6 +170,13 @@ class EnhancedParameterSampler:
     FUNCTION = "sample_parameters"
     CATEGORY = "Bayesian Optimization/Flux"
     
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        # Always return a different value to force re-execution
+        import time
+        import random
+        return f"{time.time()}_{random.random()}"
+    
     def __init__(self):
         self.current_params = None
         self.gp_model = None
