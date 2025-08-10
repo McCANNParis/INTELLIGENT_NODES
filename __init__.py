@@ -42,6 +42,18 @@ try:
 except ImportError:
     ADAPTERS_AVAILABLE = False
 
+# Import post-processing nodes for non-circular optimization
+try:
+    from .post_process_nodes import (
+        BayesianIterationManager,
+        PostGenerationScorer,
+        IterationTrigger,
+        AutoQueueManager,
+    )
+    POST_PROCESS_AVAILABLE = True
+except ImportError:
+    POST_PROCESS_AVAILABLE = False
+
 # Visualization nodes removed - functionality integrated into flux_bayesian_nodes
 VIZ_AVAILABLE = False
 
@@ -131,6 +143,25 @@ if ADAPTERS_AVAILABLE:
 
 # Visualization functionality is now integrated into flux_bayesian_nodes
 
+# Add post-processing nodes if available
+if POST_PROCESS_AVAILABLE:
+    post_process_mappings = {
+        "BayesianIterationManager": BayesianIterationManager,
+        "PostGenerationScorer": PostGenerationScorer,
+        "IterationTrigger": IterationTrigger,
+        "AutoQueueManager": AutoQueueManager,
+    }
+    
+    post_process_display = {
+        "BayesianIterationManager": "Iteration Manager (No Loop)",
+        "PostGenerationScorer": "Post-Generation Scorer",
+        "IterationTrigger": "Iteration Trigger",
+        "AutoQueueManager": "Auto Queue Manager",
+    }
+    
+    NODE_CLASS_MAPPINGS.update(post_process_mappings)
+    NODE_DISPLAY_NAME_MAPPINGS.update(post_process_display)
+
 # Version info
 __version__ = "2.0.0"
 __author__ = "Universal Bayesian Optimization for ComfyUI"
@@ -140,6 +171,7 @@ print(f"Total nodes available: {len(NODE_CLASS_MAPPINGS)}")
 print(f"Universal system: ✓")
 print(f"Legacy support: {'✓' if LEGACY_AVAILABLE else '✗'}")
 print(f"Adapters: {'✓' if ADAPTERS_AVAILABLE else '✗'}")
+print(f"Post-Processing: {'✓' if POST_PROCESS_AVAILABLE else '✗'}")
 print(f"Visualization: {'✓' if VIZ_AVAILABLE else '✗'}")
 
 # Check for optional dependencies
