@@ -179,7 +179,6 @@ class EnhancedParameterSampler:
     
     def __init__(self):
         self.current_params = None
-        self.gp_model = None
     
     def sample_parameters(self, config, similarity_score, is_first_run, previous_image=None):
         # Generate a unique ID for this optimization based on config
@@ -348,15 +347,14 @@ class EnhancedParameterSampler:
             X.append(x_point)
             y.append(-entry["score"])  # Minimize negative score
         
-        # Fit GP model
-        if self.gp_model is None:
-            self.gp_model = GaussianProcessRegressor(
-                alpha=1e-6,
-                normalize_y=True,
-                n_restarts_optimizer=5
-            )
+        # Always create a fresh GP model (don't rely on instance state between runs)
+        gp_model = GaussianProcessRegressor(
+            alpha=1e-6,
+            normalize_y=True,
+            n_restarts_optimizer=5
+        )
         
-        self.gp_model.fit(X, y)
+        gp_model.fit(X, y)
         
         # Generate candidate points
         n_candidates = 1000
@@ -392,7 +390,7 @@ class EnhancedParameterSampler:
         
         # Evaluate acquisition function
         candidates = np.array(candidates)
-        mu, std = self.gp_model.predict(candidates, return_std=True)
+        mu, std = gp_model.predict(candidates, return_std=True)
         acquisition_values = gaussian_ei(mu, std, np.min(y))
         
         # Select best candidate
