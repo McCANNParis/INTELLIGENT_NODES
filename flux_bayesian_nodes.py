@@ -1195,8 +1195,13 @@ class ImageSimilarityCalculator:
     def calculate_similarity(self, generated_image, target_image, metric):
         import torch
         import numpy as np
-        from skimage.metrics import structural_similarity as ssim
-        from skimage.metrics import mean_squared_error, peak_signal_noise_ratio
+        try:
+            from skimage.metrics import structural_similarity as ssim
+            from skimage.metrics import mean_squared_error, peak_signal_noise_ratio
+            SKIMAGE_AVAILABLE = True
+        except ImportError:
+            SKIMAGE_AVAILABLE = False
+            print("scikit-image not installed. Using basic similarity metrics.")
         
         # Convert tensors to numpy arrays
         if torch.is_tensor(generated_image):
@@ -1230,7 +1235,13 @@ class ImageSimilarityCalculator:
         details = []
         
         try:
-            if metric == "SSIM":
+            if not SKIMAGE_AVAILABLE:
+                # Fallback to basic MSE calculation
+                mse = np.mean((target_np - gen_np) ** 2)
+                score = 1.0 / (1.0 + mse)  # Convert to similarity score
+                details.append(f"Basic MSE Score: {score:.4f}")
+                details.append("Install scikit-image for more metrics")
+            elif metric == "SSIM":
                 # Calculate SSIM
                 score = ssim(target_np, gen_np, channel_axis=-1, data_range=1.0)
                 details.append(f"SSIM: {score:.4f}")
