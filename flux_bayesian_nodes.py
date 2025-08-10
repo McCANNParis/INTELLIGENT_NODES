@@ -1174,6 +1174,129 @@ Results saved to: {full_path}
             return (f"Error exporting results: {str(e)}",)
 
 
+class SimpleBayesianIterator:
+    """Simple iterator that saves images and calculates similarity automatically"""
+    
+    # Class variable to store the last generated image
+    _last_image = None
+    _iteration_count = 0
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "generated_image": ("IMAGE",),
+                "target_image": ("IMAGE",),
+                "is_first_run": ("BOOLEAN", {"default": True}),
+            }
+        }
+    
+    RETURN_TYPES = ("FLOAT", "INT", "IMAGE")
+    RETURN_NAMES = ("similarity_score", "iteration_number", "image_passthrough")
+    FUNCTION = "process_iteration"
+    CATEGORY = "Bayesian Optimization"
+    OUTPUT_NODE = True
+    
+    def process_iteration(self, generated_image, target_image, is_first_run):
+        import torch
+        import numpy as np
+        import os
+        from PIL import Image as PILImage
+        
+        # Reset on first run
+        if is_first_run:
+            SimpleBayesianIterator._iteration_count = 1
+            SimpleBayesianIterator._last_image = None
+        else:
+            SimpleBayesianIterator._iteration_count += 1
+        
+        iteration = SimpleBayesianIterator._iteration_count
+        
+        # Calculate similarity between generated and target
+        similarity_score = self._calculate_simple_similarity(generated_image, target_image)
+        
+        # Save the generated image
+        try:
+            import folder_paths
+            output_dir = folder_paths.get_output_directory()
+        except:
+            output_dir = "/workspace/ComfyUI/output"
+        
+        save_dir = os.path.join(output_dir, "bayesian_iterations")
+        os.makedirs(save_dir, exist_ok=True)
+        
+        # Convert and save image
+        if torch.is_tensor(generated_image):
+            img_np = generated_image.cpu().numpy()
+            if img_np.ndim == 4:
+                img_np = img_np[0]
+            # Handle channel order
+            if img_np.shape[0] in [3, 4]:
+                img_np = np.transpose(img_np, (1, 2, 0))
+            
+            # Save image
+            filename = f"iteration_{iteration:04d}_score_{similarity_score:.4f}.png"
+            filepath = os.path.join(save_dir, filename)
+            img_pil = PILImage.fromarray((np.clip(img_np, 0, 1) * 255).astype(np.uint8))
+            img_pil.save(filepath)
+            print(f"Saved iteration {iteration} to {filepath}")
+            print(f"Similarity score: {similarity_score:.4f}")
+        
+        # Store for next iteration
+        SimpleBayesianIterator._last_image = generated_image
+        
+        return (float(similarity_score), int(iteration), generated_image)
+    
+    def _calculate_simple_similarity(self, img1, img2):
+        """Calculate simple MSE-based similarity"""
+        try:
+            import numpy as np
+            import torch
+            
+            # Convert to numpy
+            if torch.is_tensor(img1):
+                img1_np = img1.cpu().numpy()
+            else:
+                img1_np = np.array(img1)
+            
+            if torch.is_tensor(img2):
+                img2_np = img2.cpu().numpy()
+            else:
+                img2_np = np.array(img2)
+            
+            # Handle dimensions
+            if img1_np.ndim == 4:
+                img1_np = img1_np[0]
+            if img2_np.ndim == 4:
+                img2_np = img2_np[0]
+            
+            # Ensure same shape
+            if img1_np.shape != img2_np.shape:
+                # Simple resize if needed
+                from PIL import Image as PILImage
+                
+                # Convert to PIL for resizing
+                if img1_np.shape[0] in [3, 4]:
+                    img1_np = np.transpose(img1_np, (1, 2, 0))
+                if img2_np.shape[0] in [3, 4]:
+                    img2_np = np.transpose(img2_np, (1, 2, 0))
+                
+                h, w = img2_np.shape[:2]
+                img1_pil = PILImage.fromarray((np.clip(img1_np, 0, 1) * 255).astype(np.uint8))
+                img1_pil = img1_pil.resize((w, h), PILImage.Resampling.LANCZOS)
+                img1_np = np.array(img1_pil).astype(np.float32) / 255.0
+            
+            # Calculate MSE and convert to similarity
+            mse = np.mean((img1_np - img2_np) ** 2)
+            similarity = 1.0 / (1.0 + mse * 10)  # Scale MSE for better range
+            
+            return float(similarity)
+            
+        except Exception as e:
+            print(f"Error calculating similarity: {e}")
+            return 0.5  # Default middle value
+
+
 class AutoIterationLoader:
     """Automatically loads the previous iteration's image for similarity calculation"""
     

@@ -24,6 +24,7 @@ from .flux_bayesian_nodes import (
     BayesianResultsExporter,
     ImageSimilarityCalculator,
     AutoIterationLoader,
+    SimpleBayesianIterator,
 )
 
 # Import adapter nodes if available
@@ -84,6 +85,7 @@ flux_mappings = {
     "BayesianResultsExporter": BayesianResultsExporter,
     "ImageSimilarityCalculator": ImageSimilarityCalculator,
     "AutoIterationLoader": AutoIterationLoader,
+    "SimpleBayesianIterator": SimpleBayesianIterator,
 }
 
 flux_display = {
@@ -96,6 +98,7 @@ flux_display = {
     "BayesianResultsExporter": "Results Exporter",
     "ImageSimilarityCalculator": "Image Similarity Calculator",
     "AutoIterationLoader": "Auto Iteration Loader",
+    "SimpleBayesianIterator": "Simple Bayesian Iterator",
 }
 
 NODE_CLASS_MAPPINGS.update(flux_mappings)
