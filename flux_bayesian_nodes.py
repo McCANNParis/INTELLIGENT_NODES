@@ -1174,6 +1174,127 @@ Results saved to: {full_path}
             return (f"Error exporting results: {str(e)}",)
 
 
+class AutoIterationLoader:
+    """Automatically loads the previous iteration's image for similarity calculation"""
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "current_iteration": ("INT", {"default": 1, "min": 1, "max": 100}),
+                "optimization_id": ("STRING", {"default": "opt_001"}),
+                "output_folder": ("STRING", {"default": "bayesian_iterations"}),
+            },
+            "optional": {
+                "current_image": ("IMAGE",),
+                "target_image": ("IMAGE",),
+            }
+        }
+    
+    RETURN_TYPES = ("IMAGE", "FLOAT", "STRING")
+    RETURN_NAMES = ("previous_image", "similarity_score", "status")
+    FUNCTION = "load_and_compare"
+    CATEGORY = "Bayesian Optimization"
+    
+    def load_and_compare(self, current_iteration, optimization_id, output_folder, current_image=None, target_image=None):
+        import os
+        import torch
+        import numpy as np
+        from PIL import Image as PILImage
+        
+        # Get the output directory
+        try:
+            import folder_paths
+            output_dir = folder_paths.get_output_directory()
+        except:
+            output_dir = "/workspace/ComfyUI/output"
+        
+        # Create subfolder for this optimization
+        iter_dir = os.path.join(output_dir, output_folder, optimization_id)
+        os.makedirs(iter_dir, exist_ok=True)
+        
+        # Save current image if provided
+        if current_image is not None and current_iteration > 1:
+            current_filename = f"iteration_{current_iteration-1:04d}.png"
+            current_path = os.path.join(iter_dir, current_filename)
+            
+            # Convert tensor to PIL image and save
+            if torch.is_tensor(current_image):
+                img_np = current_image.cpu().numpy()
+                if img_np.ndim == 4:
+                    img_np = img_np[0]
+                if img_np.shape[-1] == 3 or img_np.shape[-1] == 4:
+                    img_pil = PILImage.fromarray((img_np * 255).astype(np.uint8))
+                    img_pil.save(current_path)
+                    print(f"Saved iteration {current_iteration-1} to {current_path}")
+        
+        # Load previous iteration's image if it exists
+        previous_image = None
+        similarity_score = 0.0
+        status = f"Iteration {current_iteration}"
+        
+        if current_iteration > 1:
+            prev_filename = f"iteration_{current_iteration-2:04d}.png"
+            prev_path = os.path.join(iter_dir, prev_filename)
+            
+            if os.path.exists(prev_path):
+                # Load previous image
+                img_pil = PILImage.open(prev_path)
+                img_np = np.array(img_pil).astype(np.float32) / 255.0
+                
+                # Add batch dimension
+                if img_np.ndim == 3:
+                    img_np = np.expand_dims(img_np, 0)
+                
+                previous_image = torch.from_numpy(img_np)
+                
+                # Calculate similarity if target image is provided
+                if target_image is not None and current_image is not None:
+                    similarity_score = self._calculate_similarity(current_image, target_image)
+                    status = f"Iteration {current_iteration}: Similarity = {similarity_score:.4f}"
+                else:
+                    status = f"Iteration {current_iteration}: Loaded previous"
+            else:
+                status = f"Iteration {current_iteration}: No previous image found"
+        else:
+            # First iteration - return empty image
+            previous_image = torch.zeros((1, 1024, 1024, 3))
+            status = f"Iteration {current_iteration}: First run"
+        
+        return (previous_image, float(similarity_score), status)
+    
+    def _calculate_similarity(self, img1, img2):
+        """Simple MSE-based similarity calculation"""
+        try:
+            import numpy as np
+            
+            # Convert to numpy
+            if torch.is_tensor(img1):
+                img1_np = img1.cpu().numpy()
+            else:
+                img1_np = np.array(img1)
+                
+            if torch.is_tensor(img2):
+                img2_np = img2.cpu().numpy()
+            else:
+                img2_np = np.array(img2)
+            
+            # Handle batch dimension
+            if img1_np.ndim == 4:
+                img1_np = img1_np[0]
+            if img2_np.ndim == 4:
+                img2_np = img2_np[0]
+            
+            # Calculate MSE and convert to similarity score
+            mse = np.mean((img1_np - img2_np) ** 2)
+            similarity = 1.0 / (1.0 + mse)
+            
+            return similarity
+        except Exception as e:
+            print(f"Error calculating similarity: {e}")
+            return 0.0
+
+
 class ImageSimilarityCalculator:
     """Calculate similarity between generated and target images"""
     

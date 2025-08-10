@@ -23,6 +23,7 @@ from .flux_bayesian_nodes import (
     ConditionalBranch,
     BayesianResultsExporter,
     ImageSimilarityCalculator,
+    AutoIterationLoader,
 )
 
 # Import adapter nodes if available
@@ -82,6 +83,7 @@ flux_mappings = {
     "ConditionalBranch": ConditionalBranch,
     "BayesianResultsExporter": BayesianResultsExporter,
     "ImageSimilarityCalculator": ImageSimilarityCalculator,
+    "AutoIterationLoader": AutoIterationLoader,
 }
 
 flux_display = {
@@ -93,6 +95,7 @@ flux_display = {
     "ConditionalBranch": "Conditional Branch",
     "BayesianResultsExporter": "Results Exporter",
     "ImageSimilarityCalculator": "Image Similarity Calculator",
+    "AutoIterationLoader": "Auto Iteration Loader",
 }
 
 NODE_CLASS_MAPPINGS.update(flux_mappings)
