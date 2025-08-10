@@ -1182,8 +1182,8 @@ class AutoIterationLoader:
         return {
             "required": {
                 "current_iteration": ("INT", {"default": 1, "min": 1, "max": 100}),
-                "optimization_id": ("STRING", {"default": "opt_001"}),
-                "output_folder": ("STRING", {"default": "bayesian_iterations"}),
+                "optimization_id": ("STRING", {"default": "opt_001", "multiline": False}),
+                "output_folder": ("STRING", {"default": "bayesian_iterations", "multiline": False}),
             },
             "optional": {
                 "current_image": ("IMAGE",),
@@ -1191,10 +1191,11 @@ class AutoIterationLoader:
             }
         }
     
-    RETURN_TYPES = ("IMAGE", "FLOAT", "STRING")
-    RETURN_NAMES = ("previous_image", "similarity_score", "status")
+    RETURN_TYPES = ("IMAGE", "FLOAT", "STRING",)
+    RETURN_NAMES = ("previous_image", "similarity_score", "status",)
     FUNCTION = "load_and_compare"
     CATEGORY = "Bayesian Optimization"
+    OUTPUT_NODE = False
     
     def load_and_compare(self, current_iteration, optimization_id, output_folder, current_image=None, target_image=None):
         import os
@@ -1223,8 +1224,11 @@ class AutoIterationLoader:
                 img_np = current_image.cpu().numpy()
                 if img_np.ndim == 4:
                     img_np = img_np[0]
-                if img_np.shape[-1] == 3 or img_np.shape[-1] == 4:
-                    img_pil = PILImage.fromarray((img_np * 255).astype(np.uint8))
+                # Handle different channel orders
+                if img_np.shape[0] in [3, 4]:  # Channel first
+                    img_np = np.transpose(img_np, (1, 2, 0))
+                if img_np.shape[-1] in [3, 4]:  # Channel last
+                    img_pil = PILImage.fromarray((np.clip(img_np, 0, 1) * 255).astype(np.uint8))
                     img_pil.save(current_path)
                     print(f"Saved iteration {current_iteration-1} to {current_path}")
         
