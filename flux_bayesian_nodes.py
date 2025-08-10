@@ -1174,6 +1174,105 @@ Results saved to: {full_path}
             return (f"Error exporting results: {str(e)}",)
 
 
+class ImageSimilarityCalculator:
+    """Calculate similarity between generated and target images"""
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "generated_image": ("IMAGE",),
+                "target_image": ("IMAGE",),
+                "metric": (["SSIM", "MSE", "PSNR", "Combined"],),
+            }
+        }
+    
+    RETURN_TYPES = ("FLOAT", "STRING")
+    RETURN_NAMES = ("similarity_score", "metric_details")
+    FUNCTION = "calculate_similarity"
+    CATEGORY = "Bayesian Optimization"
+    
+    def calculate_similarity(self, generated_image, target_image, metric):
+        import torch
+        import numpy as np
+        from skimage.metrics import structural_similarity as ssim
+        from skimage.metrics import mean_squared_error, peak_signal_noise_ratio
+        
+        # Convert tensors to numpy arrays
+        if torch.is_tensor(generated_image):
+            gen_np = generated_image.cpu().numpy()
+        else:
+            gen_np = np.array(generated_image)
+            
+        if torch.is_tensor(target_image):
+            target_np = target_image.cpu().numpy()
+        else:
+            target_np = np.array(target_image)
+        
+        # Handle batch dimension
+        if gen_np.ndim == 4:
+            gen_np = gen_np[0]
+        if target_np.ndim == 4:
+            target_np = target_np[0]
+            
+        # Ensure same shape
+        if gen_np.shape != target_np.shape:
+            # Resize to match target
+            from PIL import Image
+            if gen_np.shape[-1] == 3 or gen_np.shape[-1] == 4:
+                # Channel last format
+                h, w = target_np.shape[:2]
+                gen_pil = Image.fromarray((gen_np * 255).astype(np.uint8))
+                gen_pil = gen_pil.resize((w, h), Image.Resampling.LANCZOS)
+                gen_np = np.array(gen_pil) / 255.0
+            
+        score = 0.0
+        details = []
+        
+        try:
+            if metric == "SSIM":
+                # Calculate SSIM
+                score = ssim(target_np, gen_np, channel_axis=-1, data_range=1.0)
+                details.append(f"SSIM: {score:.4f}")
+                
+            elif metric == "MSE":
+                # Calculate MSE (inverted to be higher = better)
+                mse = mean_squared_error(target_np, gen_np)
+                score = 1.0 / (1.0 + mse)  # Convert to similarity score
+                details.append(f"MSE: {mse:.4f}, Score: {score:.4f}")
+                
+            elif metric == "PSNR":
+                # Calculate PSNR (normalized to 0-1)
+                psnr = peak_signal_noise_ratio(target_np, gen_np, data_range=1.0)
+                score = min(psnr / 100.0, 1.0)  # Normalize to 0-1
+                details.append(f"PSNR: {psnr:.2f}dB, Score: {score:.4f}")
+                
+            elif metric == "Combined":
+                # Combine multiple metrics
+                ssim_score = ssim(target_np, gen_np, channel_axis=-1, data_range=1.0)
+                mse = mean_squared_error(target_np, gen_np)
+                mse_score = 1.0 / (1.0 + mse)
+                psnr = peak_signal_noise_ratio(target_np, gen_np, data_range=1.0)
+                psnr_score = min(psnr / 100.0, 1.0)
+                
+                # Weighted average
+                score = (ssim_score * 0.5 + mse_score * 0.25 + psnr_score * 0.25)
+                details.append(f"Combined Score: {score:.4f}")
+                details.append(f"  SSIM: {ssim_score:.4f}")
+                details.append(f"  MSE: {mse_score:.4f}")
+                details.append(f"  PSNR: {psnr_score:.4f}")
+                
+        except Exception as e:
+            print(f"Error calculating similarity: {e}")
+            score = 0.0
+            details.append(f"Error: {str(e)}")
+        
+        details_str = "\n".join(details)
+        print(f"Similarity calculation: {details_str}")
+        
+        return (float(score), details_str)
+
+
 # Node class mappings
 NODE_CLASS_MAPPINGS = {
     "EnhancedBayesianConfig": EnhancedBayesianConfig,
@@ -1183,6 +1282,7 @@ NODE_CLASS_MAPPINGS = {
     "IterationCounter": IterationCounter,
     "ConditionalBranch": ConditionalBranch,
     "BayesianResultsExporter": BayesianResultsExporter,
+    "ImageSimilarityCalculator": ImageSimilarityCalculator,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -1193,4 +1293,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "IterationCounter": "Iteration Counter",
     "ConditionalBranch": "Conditional Branch",
     "BayesianResultsExporter": "Bayesian Results Exporter",
+    "ImageSimilarityCalculator": "Image Similarity Calculator",
 }
