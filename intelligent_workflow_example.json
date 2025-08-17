@@ -11,7 +11,7 @@
       "order": 0,
       "mode": 0,
       "outputs": [
-        {"name": "study", "type": "STUDY", "links": [1, 10]},
+        {"name": "study", "type": "STUDY", "links": [1, 10, 20]},
         {"name": "n_trials", "type": "INT", "links": []},
         {"name": "best_value", "type": "FLOAT", "links": []},
         {"name": "status", "type": "STRING", "links": []}
