@@ -1,34 +1,23 @@
-# Core requirements (always needed)
+# Core Requirements (Essential)
 torch>=2.0.0
 torchvision>=0.15.0
 numpy>=1.21.0
 Pillow>=9.0.0
+optuna>=3.0.0
+
+# Visualization (Recommended)
 matplotlib>=3.5.0
 
-# Bayesian optimization (highly recommended)
-scikit-optimize>=0.9.0
+# Optional - Advanced Similarity Metrics
+# Uncomment to install:
 
-# Scientific computing (recommended)
-scipy>=1.7.0
-scikit-learn>=1.0.0
+# For perceptual similarity
+# lpips>=0.1.4
 
-# Visualization (recommended)
-seaborn>=0.12.0
+# For human-like perceptual similarity  
+# dreamsim
 
-# Image processing (optional but useful)
-scikit-image>=0.19.0
-# opencv-python>=4.5.0  # Only if using advanced image processing
-
-# Optional dependencies for advanced similarity metrics
-# Install these manually if needed:
-#
-# For perceptual similarity (LPIPS):
-# pip install lpips>=0.1.4
-#
-# For semantic similarity (CLIP):
+# For semantic similarity
 # pip install git+https://github.com/openai/CLIP.git
-#
-# For PDF report generation:
-# pip install reportlab>=3.6.0
 
 # Note: ComfyUI and its dependencies should already be installed

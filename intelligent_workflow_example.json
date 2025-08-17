@@ -1,0 +1,324 @@
+{
+  "last_node_id": 20,
+  "last_link_id": 25,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "OptimizerStateNode",
+      "pos": [100, 100],
+      "size": [300, 150],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {"name": "study", "type": "STUDY", "links": [1, 10]},
+        {"name": "n_trials", "type": "INT", "links": []},
+        {"name": "best_value", "type": "FLOAT", "links": []},
+        {"name": "status", "type": "STRING", "links": []}
+      ],
+      "properties": {},
+      "widgets_values": ["flux_optimization", "maximize", "TPE", "None", false, false]
+    },
+    {
+      "id": 2,
+      "type": "OptimizerSuggestNode",
+      "pos": [450, 100],
+      "size": [350, 200],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 1}
+      ],
+      "outputs": [
+        {"name": "trial", "type": "TRIAL", "links": [2]},
+        {"name": "param1", "type": "FLOAT", "links": [3]},
+        {"name": "param2", "type": "INT", "links": [4]},
+        {"name": "param3", "type": "STRING", "links": [5]},
+        {"name": "param4", "type": "FLOAT", "links": []},
+        {"name": "param5", "type": "INT", "links": []},
+        {"name": "param6", "type": "STRING", "links": []},
+        {"name": "params_json", "type": "STRING", "links": []}
+      ],
+      "properties": {},
+      "widgets_values": [
+        "[{\"name\": \"guidance_scale\", \"type\": \"float\", \"low\": 3.0, \"high\": 12.0}, {\"name\": \"steps\", \"type\": \"int\", \"low\": 20, \"high\": 50}, {\"name\": \"sampler\", \"type\": \"categorical\", \"choices\": [\"euler\", \"dpmpp_2m\", \"ddim\"]}]",
+        false
+      ]
+    },
+    {
+      "id": 3,
+      "type": "CheckpointLoaderSimple",
+      "pos": [100, 350],
+      "size": [300, 100],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "links": [6]},
+        {"name": "CLIP", "type": "CLIP", "links": [7, 8]},
+        {"name": "VAE", "type": "VAE", "links": [9]}
+      ],
+      "properties": {},
+      "widgets_values": ["flux1-dev.safetensors"]
+    },
+    {
+      "id": 4,
+      "type": "CLIPTextEncode",
+      "pos": [450, 350],
+      "size": [300, 100],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 7}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [11]}
+      ],
+      "properties": {},
+      "widgets_values": ["A beautiful landscape with mountains and a lake at sunset"]
+    },
+    {
+      "id": 5,
+      "type": "CLIPTextEncode",
+      "pos": [450, 480],
+      "size": [300, 100],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 8}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [12]}
+      ],
+      "properties": {},
+      "widgets_values": ["blurry, low quality, distorted"]
+    },
+    {
+      "id": 6,
+      "type": "EmptyLatentImage",
+      "pos": [100, 500],
+      "size": [300, 100],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [13]}
+      ],
+      "properties": {},
+      "widgets_values": [1024, 1024, 1]
+    },
+    {
+      "id": 7,
+      "type": "KSampler",
+      "pos": [850, 350],
+      "size": [300, 250],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 6},
+        {"name": "positive", "type": "CONDITIONING", "link": 11},
+        {"name": "negative", "type": "CONDITIONING", "link": 12},
+        {"name": "latent_image", "type": "LATENT", "link": 13},
+        {"name": "cfg", "type": "FLOAT", "link": 3},
+        {"name": "steps", "type": "INT", "link": 4},
+        {"name": "sampler_name", "type": "STRING", "link": 5}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [14]}
+      ],
+      "properties": {},
+      "widgets_values": [42, "fixed", 7.0, 30, "euler", "normal", 1.0]
+    },
+    {
+      "id": 8,
+      "type": "VAEDecode",
+      "pos": [1200, 350],
+      "size": [200, 50],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 14},
+        {"name": "vae", "type": "VAE", "link": 9}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [15, 16]}
+      ],
+      "properties": {}
+    },
+    {
+      "id": 9,
+      "type": "LoadImage",
+      "pos": [850, 650],
+      "size": [300, 300],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [17]}
+      ],
+      "properties": {},
+      "widgets_values": ["target_image.png", "image"]
+    },
+    {
+      "id": 10,
+      "type": "ScoringNode",
+      "pos": [1200, 650],
+      "size": [300, 200],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {"name": "generated_image", "type": "IMAGE", "link": 15},
+        {"name": "target_image", "type": "IMAGE", "link": 17}
+      ],
+      "outputs": [
+        {"name": "score", "type": "FLOAT", "links": [18]},
+        {"name": "dreamsim_score", "type": "FLOAT", "links": []},
+        {"name": "lpips_score", "type": "FLOAT", "links": []},
+        {"name": "mse_score", "type": "FLOAT", "links": []},
+        {"name": "details", "type": "STRING", "links": []}
+      ],
+      "properties": {},
+      "widgets_values": ["combined", 0.5, 0.3, 0.2, true]
+    },
+    {
+      "id": 11,
+      "type": "OptimizerTellNode",
+      "pos": [1550, 650],
+      "size": [300, 150],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 10},
+        {"name": "trial", "type": "TRIAL", "link": 2},
+        {"name": "score", "type": "FLOAT", "link": 18}
+      ],
+      "outputs": [
+        {"name": "study", "type": "STUDY", "links": []},
+        {"name": "status", "type": "STRING", "links": [19]},
+        {"name": "best_score", "type": "FLOAT", "links": []},
+        {"name": "trial_number", "type": "INT", "links": []}
+      ],
+      "properties": {},
+      "widgets_values": [true, false]
+    },
+    {
+      "id": 12,
+      "type": "SaveImage",
+      "pos": [1450, 350],
+      "size": [300, 270],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 16}
+      ],
+      "properties": {},
+      "widgets_values": ["optimized_output"]
+    },
+    {
+      "id": 13,
+      "type": "ShowText",
+      "pos": [1900, 650],
+      "size": [300, 100],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "text", "type": "STRING", "link": 19}
+      ],
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": []}
+      ],
+      "properties": {},
+      "widgets_values": ["Status will appear here"]
+    },
+    {
+      "id": 14,
+      "type": "StudyVisualizerNode",
+      "pos": [100, 700],
+      "size": [300, 150],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 20}
+      ],
+      "outputs": [
+        {"name": "plot", "type": "IMAGE", "links": [21]},
+        {"name": "analysis", "type": "STRING", "links": []}
+      ],
+      "properties": {},
+      "widgets_values": ["history", 1024, 768]
+    },
+    {
+      "id": 15,
+      "type": "PreviewImage",
+      "pos": [450, 700],
+      "size": [300, 250],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 21}
+      ],
+      "properties": {}
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "STUDY"],
+    [2, 2, 0, 11, 1, "TRIAL"],
+    [3, 2, 1, 7, 4, "FLOAT"],
+    [4, 2, 2, 7, 5, "INT"],
+    [5, 2, 3, 7, 6, "STRING"],
+    [6, 3, 0, 7, 0, "MODEL"],
+    [7, 3, 1, 4, 0, "CLIP"],
+    [8, 3, 1, 5, 0, "CLIP"],
+    [9, 3, 2, 8, 1, "VAE"],
+    [10, 1, 0, 11, 0, "STUDY"],
+    [11, 4, 0, 7, 1, "CONDITIONING"],
+    [12, 5, 0, 7, 2, "CONDITIONING"],
+    [13, 6, 0, 7, 3, "LATENT"],
+    [14, 7, 0, 8, 0, "LATENT"],
+    [15, 8, 0, 10, 0, "IMAGE"],
+    [16, 8, 0, 12, 0, "IMAGE"],
+    [17, 9, 0, 10, 1, "IMAGE"],
+    [18, 10, 0, 11, 2, "FLOAT"],
+    [19, 11, 1, 13, 0, "STRING"],
+    [20, 1, 0, 14, 0, "STUDY"],
+    [21, 14, 0, 15, 0, "IMAGE"]
+  ],
+  "groups": [
+    {
+      "title": "Optimization Brain",
+      "bounding": [80, 20, 800, 300],
+      "color": "#3f789e"
+    },
+    {
+      "title": "Image Generation",
+      "bounding": [80, 270, 1350, 350],
+      "color": "#4b7c4b"
+    },
+    {
+      "title": "Scoring & Feedback",
+      "bounding": [830, 570, 1400, 300],
+      "color": "#b06634"
+    },
+    {
+      "title": "Visualization",
+      "bounding": [80, 620, 700, 350],
+      "color": "#8b4789"
+    }
+  ],
+  "config": {},
+  "extra": {
+    "info": "Intelligent Self-Optimizing Workflow Example\n\nThis workflow demonstrates the self-improving machine concept:\n1. Each 'Queue Prompt' click runs one optimization trial\n2. The system learns and improves parameters automatically\n3. Progress is saved persistently between sessions\n4. Real-time visualization shows optimization history\n\nTo use:\n1. Load your target image\n2. Adjust scoring weights if needed\n3. Click 'Queue Prompt' repeatedly to optimize\n4. Watch as the system finds better parameters!"
+  },
+  "version": 0.4
+}

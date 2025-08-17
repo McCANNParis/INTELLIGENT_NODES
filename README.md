@@ -1,236 +1,182 @@
-# Bayesian Optimization Nodes for ComfyUI
+# 🧠 Intelligent Self-Optimizing Nodes for ComfyUI
 
-A comprehensive suite of custom nodes for optimizing diffusion model parameters using Bayesian optimization methods. This universal system supports image models (Stable Diffusion, SDXL, Flux) and video models, automatically finding the best parameters for your specific use case.
+Transform your ComfyUI workflows into self-improving machines that learn and optimize with each generation.
 
-## Key Features
+## 🌟 What Makes This Different?
 
-### Universal Model Support
-- **Auto-detection**: Automatically detects model types (image/video)
-- **Multiple Models**: Works with SD, SDXL, Flux, AnimateDiff, ModelScope, etc.
-- **Unified Interface**: Consistent node interface across all model types
-- **Smart Adapters**: Model-specific optimizations through adapters
+Unlike traditional workflows where you manually tweak parameters, these intelligent nodes create a **self-optimizing system** that:
+- **Learns** from each generation
+- **Remembers** what works best (persistent storage)
+- **Suggests** better parameters automatically
+- **Visualizes** optimization progress in real-time
 
-### Core Optimization Features
-- **Bayesian Optimization**: Efficiently explore parameter spaces using Gaussian Process regression
-- **Multiple Metrics**: LPIPS, CLIP, MSE, SSIM, aesthetic scoring, and temporal consistency
-- **Real-time Visualization**: Monitor optimization progress with dashboards
-- **Parameter Analysis**: Understand which parameters matter most
-- **Export & Reporting**: Generate comprehensive reports in HTML, Markdown, or JSON
+Each click of "Queue Prompt" isn't just generating an image - it's teaching the system to be better.
 
-### Workflow Options
-- **AutoModelOptimizer**: One-click optimization for any model
-- **Simple Workflows**: Easy setup for beginners with presets
-- **Advanced Workflows**: Full control for power users
-- **Batch Processing**: Optimize multiple targets simultaneously
+## 🚀 Quick Start
 
-## Installation
+### Installation
 
-1. Clone this repository into your ComfyUI `custom_nodes` folder:
+1. Navigate to ComfyUI custom nodes:
 ```bash
 cd ComfyUI/custom_nodes
-git clone https://github.com/yourusername/NODES_BAYESIAN.git
 ```
 
-2. Install required dependencies:
+2. Clone this repository:
+```bash
+git clone https://github.com/yourusername/NODES_BAYESIAN.git
+cd NODES_BAYESIAN
+```
+
+3. Install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-3. For advanced features, install optional dependencies:
+4. (Optional) Install advanced similarity metrics:
 ```bash
-# For perceptual similarity metrics
-pip install lpips
-
-# For semantic similarity
-pip install git+https://github.com/openai/CLIP.git
+pip install lpips dreamsim
 ```
 
-4. Restart ComfyUI
+5. Restart ComfyUI
 
-## Quick Start
+### First Optimization
 
-### Simplest Workflow (Auto-Optimization)
-1. Connect your model → `AutoModelOptimizer`
-2. Provide target image/video and prompt
-3. Set optimization steps
-4. Run!
+1. Load `intelligent_workflow_example.json` in ComfyUI
+2. Add your target image (what you want to match)
+3. Click "Queue Prompt" to start learning
+4. Watch as each generation gets better!
 
-### Basic Flux Workflow
-1. **Load Target Image**: Use standard ComfyUI image loader
-2. **Configure Optimization**: Add `Enhanced Bayesian Config (Flux)` node
-3. **Sample Parameters**: Connect `Enhanced Parameter Sampler (Flux)` 
-4. **Adapt Parameters**: Use adapter nodes to convert optimizer outputs
-5. **Score Results**: Add `Aesthetic Scorer` to evaluate generated images
-6. **Monitor Progress**: Use `Optimization Dashboard` for real-time visualization
+## 📦 Node Overview
 
-### Example Connection Flow
-```
-[Load Image] → [Enhanced Bayesian Config]
-                        ↓
-              [Enhanced Parameter Sampler]
-                        ↓
-    ┌────────────────────────────────────────┐
-    ↓              ↓              ↓           ↓
-[guidance]    [steps]     [scheduler]   [sampler]
-    ↓              ↓              ↓           ↓
-[FluxGuidance] [Scheduler]  [Scheduler]  [KSampler]
-                                          ↓
-                                    [Generated Image]
-                                          ↓
-                                  [Aesthetic Scorer]
-                                          ↓
-                              [Back to Parameter Sampler]
-```
+### Core Optimization Nodes
 
-## Node Categories
+#### 🧠 Optimizer State
+The "brain" that manages the optimization study
+- Creates and loads persistent optimization studies
+- Tracks all trials and their results
+- Survives ComfyUI restarts
 
-### Universal System Nodes
-- **UniversalParameterSpace**: Define parameters for any model
-- **UniversalBayesianOptimizer**: Core optimization engine
-- **UniversalSampler**: Sample with any diffusion model
-- **MetricEvaluatorUniversal**: Evaluate any content type
+#### 💡 Suggest Parameters  
+Proposes the next set of parameters to test
+- Configurable parameter spaces (float, int, categorical)
+- Uses advanced optimization algorithms (TPE, CMA-ES)
+- Can replay best parameters
 
-### Auto/Simple Nodes
-- **AutoModelOptimizer**: Automatic optimization
-- **SimpleOptimizationSetup**: Easy setup interface
-- **SimpleOptimizationRun**: Run optimization
-- **PresetOptimizationConfigs**: Pre-configured settings
+#### 📊 Score Images
+Evaluates how well generated images match your target
+- Multiple metrics: DreamSim, LPIPS, MSE
+- Weighted combination for custom objectives
+- Real-time scoring feedback
 
-### Flux-Specific Nodes
-- **Enhanced Bayesian Config (Flux)**: Configuration for Flux optimization
-- **Enhanced Parameter Sampler (Flux)**: Intelligent parameter sampling
-- **Aesthetic Scorer**: Advanced similarity and quality scoring
-- **Optimization Dashboard**: Real-time monitoring
+#### ✍️ Complete Trial
+Closes the optimization loop
+- Reports results back to the optimizer
+- Updates the internal model
+- Triggers auto-save
 
-### Adapter Nodes
-- **Power LoRA Adapter**: Converts optimizer weights to Power Lora format
-- **Resolution Adapter**: Converts aspect ratios to width/height
-- **Scheduler Adapter**: Maps scheduler names to configurations
-- **Sampler Adapter**: Maps sampler names to KSampler configs
-- **Optimization Loop Controller**: Controls optimization flow
-- **Parameter Logger**: Logs optimization progress
-- **Batch Parameter Generator**: Generate multiple parameter sets
+### Utility Nodes
 
-## Parameter Ranges
+#### 🏆 Best Parameters
+Extracts the optimal configuration found so far
 
-### Recommended Starting Ranges
-- **Guidance (CFG)**: 1.0 - 7.0
-- **Steps**: 20 - 50
-- **LoRA Weights**: 0.0 - 1.2
-- **Schedulers**: beta, normal, simple, ddim_uniform, karras, exponential
-- **Samplers**: euler, uni_pc, dpmpp_2m, dpmpp_3m_sde, heun, dpm_2
-- **Resolution Ratios**: 1:1, 3:4, 4:3, 16:9, 9:16
+#### 📈 Visualize Study
+Creates plots showing optimization progress
 
-## Advanced Usage
+#### 🔄 Pass Trial
+Helper for complex workflow routing
 
-### Multi-Stage Optimization
-1. First optimize core parameters (CFG, steps)
-2. Then fine-tune LoRA weights with fixed core parameters
-3. Finally optimize aesthetic parameters
+## 🎯 Use Cases
 
-### Video Optimization
-1. Use `UniversalParameterSpace` with model_type="video"
-2. Configure temporal parameters
-3. Use `MetricEvaluatorUniversal` with temporal metrics
-4. Optimize with temporal consistency metrics
+- **Style Transfer**: Find optimal parameters to match a reference style
+- **Parameter Tuning**: Automatically discover the best CFG, steps, sampler
+- **Model Comparison**: Optimize across different checkpoints
+- **Prompt Engineering**: Test prompt variations systematically
+- **Quality Optimization**: Maximize aesthetic scores
 
-### Custom Workflows
-1. Define custom parameter space with `UniversalParameterSpace`
-2. Add custom parameters via JSON
-3. Use appropriate metric evaluator
-4. Build complex optimization pipelines
+## 🔧 Advanced Configuration
 
-### Batch Processing
-Use `Batch Parameter Generator` with strategies:
-- **Sobol**: Quasi-random sequence for good coverage
-- **Latin Hypercube**: Optimal space-filling design
-- **Grid**: Systematic parameter exploration
-- **Random**: Pure random sampling
+### Custom Parameter Spaces
 
-## Performance Optimizations
-- Reduced code duplication through universal system
-- Efficient parameter encoding/decoding
-- Batched operations where possible
-- Smart caching of model evaluations
-- Minimal memory footprint
-
-## Tips & Best Practices
-
-1. **Start Small**: Begin with 30-50 iterations to test your setup
-2. **Initial Exploration**: Use 10-15 initial points for good coverage
-3. **Monitor Convergence**: Stop early if scores plateau
-4. **Save Checkpoints**: Use loop controller to save progress
-5. **Analyze Results**: Use importance analysis to focus on key parameters
-6. **Use Presets**: Start with preset configurations for common use cases
-
-## Troubleshooting
-
-### Slow Convergence
-- Increase `n_initial_points` for better exploration
-- Check if parameter ranges are too restrictive
-- Ensure similarity metric matches your goal
-
-### Memory Issues
-- Reduce resolution during optimization
-- Decrease batch size
-- Use fewer LoRAs simultaneously
-- Enable gradient checkpointing if available
-
-### Poor Results
-- Verify target image/video quality
-- Check if fixed prompt matches target
-- Try different similarity metrics
-- Adjust metric weights for your use case
-
-## File Structure
-```
-NODES_BAYESIAN/
-├── core/                   # Core optimization system
-│   ├── base_optimizer.py   # Base classes
-│   └── __init__.py
-├── adapters/              # Model adapters
-│   ├── image_adapter.py   # Image models
-│   ├── video_adapter.py   # Video models
-│   └── __init__.py
-├── unified_nodes.py       # Main unified node system
-├── metrics_universal.py   # Universal metrics
-├── flux_bayesian_nodes.py # Flux-specific nodes
-├── flux_adapter_nodes.py  # Adapter nodes
-└── __init__.py           # Main entry point
+Configure the OptimizerSuggestNode with JSON:
+```json
+[
+  {"name": "cfg", "type": "float", "low": 1.0, "high": 20.0},
+  {"name": "steps", "type": "int", "low": 20, "high": 100},
+  {"name": "sampler", "type": "categorical", 
+   "choices": ["euler", "dpmpp_2m", "ddim"]}
+]
 ```
 
-## Migration Guide
+### Optimization Algorithms
 
-### From Legacy Nodes
-Replace:
-- `ParameterSpaceNode` → `UniversalParameterSpace`
-- `BayesianOptimizerNode` → `UniversalBayesianOptimizer`
-- `BayesianSamplerNode` → `UniversalSampler`
-- `MetricEvaluatorNode` → `MetricEvaluatorUniversal`
+- **TPE** (Default): Tree-structured Parzen Estimator - great for most cases
+- **Random**: Baseline for comparison
+- **CMA-ES**: Evolution strategy - good for continuous parameters
 
-### From Basic/Original Nodes
-- Most nodes have universal equivalents
-- Use `AutoModelOptimizer` for quick setup
-- Enhanced nodes provide superset of functionality
+### Scoring Weights
 
-## Future Enhancements
-- Audio diffusion model support
-- Multi-GPU optimization
-- Distributed optimization
-- Real-time parameter adjustment
-- Cloud-based optimization services
-- Integration with more model types
+Adjust the importance of different similarity metrics:
+- **DreamSim**: Human perceptual similarity (0.0-1.0)
+- **LPIPS**: Learned perceptual similarity (0.0-1.0)
+- **MSE**: Pixel-level similarity (0.0-1.0)
 
-## Contributing
+## 💾 Persistence
 
-Contributions are welcome! Please submit issues and pull requests on GitHub.
+Studies are automatically saved to:
+```
+ComfyUI/models/optimizers/[study_name]_[hash].pkl
+```
 
-## License
+This means:
+- ✅ Optimization continues after restarts
+- ✅ Studies can be shared between machines
+- ✅ Progress is never lost
 
-MIT License - see LICENSE file for details
+## 🚅 RunPod Deployment
 
-## Acknowledgments
+See [RUNPOD_DEPLOYMENT.md](RUNPOD_DEPLOYMENT.md) for detailed cloud deployment instructions.
 
-- ComfyUI community for the amazing framework
-- scikit-optimize developers for Bayesian optimization tools
-- Model creators for the powerful generation capabilities
+Quick setup:
+```bash
+# On RunPod GPU instance
+cd /workspace/ComfyUI/custom_nodes
+git clone [this-repo]
+cd NODES_BAYESIAN
+pip install -r requirements.txt
+```
+
+## 📊 Monitoring Progress
+
+Watch optimization in real-time:
+1. Use the **StudyVisualizerNode** to see optimization history
+2. Check the **best_value** output to track improvements
+3. Monitor the **status** output for trial information
+
+## 🤝 Contributing
+
+Contributions welcome! Areas of interest:
+- Additional similarity metrics
+- New optimization algorithms
+- UI improvements
+- Workflow templates
+
+## 📄 License
+
+MIT License - See LICENSE file for details
+
+## 🙏 Acknowledgments
+
+- [Optuna](https://optuna.org/) - Advanced optimization framework
+- [DreamSim](https://dreamsim-nights.github.io/) - Human perceptual similarity
+- [LPIPS](https://richzhang.github.io/PerceptualSimilarity/) - Learned perceptual metrics
+- [ComfyUI](https://github.com/comfyanonymous/ComfyUI) - The amazing node-based UI
+
+## 💬 Support
+
+- **Issues**: GitHub Issues for bug reports
+- **Discussions**: GitHub Discussions for questions
+- **Discord**: ComfyUI Discord #custom-nodes channel
+
+---
+
+**Remember**: Every click makes it smarter! 🚀
