@@ -1,6 +1,6 @@
 {
-  "last_node_id": 20,
-  "last_link_id": 25,
+  "last_node_id": 21,
+  "last_link_id": 26,
   "nodes": [
     {
       "id": 1,
@@ -34,7 +34,7 @@
         {"name": "trial", "type": "TRIAL", "links": [2]},
         {"name": "param1", "type": "FLOAT", "links": [3]},
         {"name": "param2", "type": "INT", "links": [4]},
-        {"name": "param3", "type": "STRING", "links": [5]},
+        {"name": "param3", "type": "STRING", "links": [22]},
         {"name": "param4", "type": "FLOAT", "links": []},
         {"name": "param5", "type": "INT", "links": []},
         {"name": "param6", "type": "STRING", "links": []},
@@ -47,12 +47,29 @@
       ]
     },
     {
+      "id": 16,
+      "type": "SamplerAdapter",
+      "pos": [850, 100],
+      "size": [200, 100],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {"name": "sampler_string", "type": "STRING", "link": 22}
+      ],
+      "outputs": [
+        {"name": "sampler_name", "type": "COMBO", "links": [5]}
+      ],
+      "properties": {},
+      "widgets_values": ["euler"]
+    },
+    {
       "id": 3,
       "type": "CheckpointLoaderSimple",
       "pos": [100, 350],
       "size": [300, 100],
       "flags": {},
-      "order": 2,
+      "order": 3,
       "mode": 0,
       "outputs": [
         {"name": "MODEL", "type": "MODEL", "links": [6]},
@@ -68,7 +85,7 @@
       "pos": [450, 350],
       "size": [300, 100],
       "flags": {},
-      "order": 3,
+      "order": 4,
       "mode": 0,
       "inputs": [
         {"name": "clip", "type": "CLIP", "link": 7}
@@ -85,7 +102,7 @@
       "pos": [450, 480],
       "size": [300, 100],
       "flags": {},
-      "order": 4,
+      "order": 5,
       "mode": 0,
       "inputs": [
         {"name": "clip", "type": "CLIP", "link": 8}
@@ -102,7 +119,7 @@
       "pos": [100, 500],
       "size": [300, 100],
       "flags": {},
-      "order": 5,
+      "order": 6,
       "mode": 0,
       "outputs": [
         {"name": "LATENT", "type": "LATENT", "links": [13]}
@@ -113,10 +130,10 @@
     {
       "id": 7,
       "type": "KSampler",
-      "pos": [850, 350],
+      "pos": [1100, 350],
       "size": [300, 250],
       "flags": {},
-      "order": 6,
+      "order": 7,
       "mode": 0,
       "inputs": [
         {"name": "model", "type": "MODEL", "link": 6},
@@ -125,7 +142,7 @@
         {"name": "latent_image", "type": "LATENT", "link": 13},
         {"name": "cfg", "type": "FLOAT", "link": 3},
         {"name": "steps", "type": "INT", "link": 4},
-        {"name": "sampler_name", "type": "STRING", "link": 5}
+        {"name": "sampler_name", "type": "COMBO", "link": 5}
       ],
       "outputs": [
         {"name": "LATENT", "type": "LATENT", "links": [14]}
@@ -136,10 +153,10 @@
     {
       "id": 8,
       "type": "VAEDecode",
-      "pos": [1200, 350],
+      "pos": [1450, 350],
       "size": [200, 50],
       "flags": {},
-      "order": 7,
+      "order": 8,
       "mode": 0,
       "inputs": [
         {"name": "samples", "type": "LATENT", "link": 14},
@@ -156,7 +173,7 @@
       "pos": [850, 650],
       "size": [300, 300],
       "flags": {},
-      "order": 8,
+      "order": 9,
       "mode": 0,
       "outputs": [
         {"name": "IMAGE", "type": "IMAGE", "links": [17]}
@@ -170,7 +187,7 @@
       "pos": [1200, 650],
       "size": [300, 200],
       "flags": {},
-      "order": 9,
+      "order": 10,
       "mode": 0,
       "inputs": [
         {"name": "generated_image", "type": "IMAGE", "link": 15},
@@ -192,7 +209,7 @@
       "pos": [1550, 650],
       "size": [300, 150],
       "flags": {},
-      "order": 10,
+      "order": 11,
       "mode": 0,
       "inputs": [
         {"name": "study", "type": "STUDY", "link": 10},
@@ -211,10 +228,10 @@
     {
       "id": 12,
       "type": "SaveImage",
-      "pos": [1450, 350],
+      "pos": [1700, 350],
       "size": [300, 270],
       "flags": {},
-      "order": 11,
+      "order": 12,
       "mode": 0,
       "inputs": [
         {"name": "images", "type": "IMAGE", "link": 16}
@@ -228,7 +245,7 @@
       "pos": [1900, 650],
       "size": [300, 100],
       "flags": {},
-      "order": 12,
+      "order": 13,
       "mode": 0,
       "inputs": [
         {"name": "text", "type": "STRING", "link": 19}
@@ -245,7 +262,7 @@
       "pos": [100, 700],
       "size": [300, 150],
       "flags": {},
-      "order": 13,
+      "order": 14,
       "mode": 0,
       "inputs": [
         {"name": "study", "type": "STUDY", "link": 20}
@@ -263,7 +280,7 @@
       "pos": [450, 700],
       "size": [300, 250],
       "flags": {},
-      "order": 14,
+      "order": 15,
       "mode": 0,
       "inputs": [
         {"name": "images", "type": "IMAGE", "link": 21}
@@ -276,7 +293,7 @@
     [2, 2, 0, 11, 1, "TRIAL"],
     [3, 2, 1, 7, 4, "FLOAT"],
     [4, 2, 2, 7, 5, "INT"],
-    [5, 2, 3, 7, 6, "STRING"],
+    [5, 16, 0, 7, 6, "COMBO"],
     [6, 3, 0, 7, 0, "MODEL"],
     [7, 3, 1, 4, 0, "CLIP"],
     [8, 3, 1, 5, 0, "CLIP"],
@@ -292,17 +309,18 @@
     [18, 10, 0, 11, 2, "FLOAT"],
     [19, 11, 1, 13, 0, "STRING"],
     [20, 1, 0, 14, 0, "STUDY"],
-    [21, 14, 0, 15, 0, "IMAGE"]
+    [21, 14, 0, 15, 0, "IMAGE"],
+    [22, 2, 3, 16, 0, "STRING"]
   ],
   "groups": [
     {
       "title": "Optimization Brain",
-      "bounding": [80, 20, 800, 300],
+      "bounding": [80, 20, 1000, 300],
       "color": "#3f789e"
     },
     {
       "title": "Image Generation",
-      "bounding": [80, 270, 1350, 350],
+      "bounding": [80, 270, 1650, 350],
       "color": "#4b7c4b"
     },
     {
@@ -318,7 +336,7 @@
   ],
   "config": {},
   "extra": {
-    "info": "Intelligent Self-Optimizing Workflow Example\n\nThis workflow demonstrates the self-improving machine concept:\n1. Each 'Queue Prompt' click runs one optimization trial\n2. The system learns and improves parameters automatically\n3. Progress is saved persistently between sessions\n4. Real-time visualization shows optimization history\n\nTo use:\n1. Load your target image\n2. Adjust scoring weights if needed\n3. Click 'Queue Prompt' repeatedly to optimize\n4. Watch as the system finds better parameters!"
+    "info": "Intelligent Self-Optimizing Workflow Example\n\nThis workflow demonstrates the self-improving machine concept:\n1. Each 'Queue Prompt' click runs one optimization trial\n2. The system learns and improves parameters automatically\n3. Progress is saved persistently between sessions\n4. Real-time visualization shows optimization history\n\nNote: The SamplerAdapter node converts the optimizer's string output\nto ComfyUI's expected sampler type format.\n\nTo use:\n1. Load your target image\n2. Adjust scoring weights if needed\n3. Click 'Queue Prompt' repeatedly to optimize\n4. Watch as the system finds better parameters!"
   },
-  "version": 0.4
+  "version": 0.5
 }

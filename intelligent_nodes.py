@@ -159,7 +159,11 @@ class OptimizerStateNode:
         
         # Get study statistics
         n_trials = len(study.trials)
-        best_value = study.best_value if study.best_trial else 0.0
+        try:
+            best_value = study.best_value if study.best_trial else 0.0
+        except ValueError:
+            # No trials completed yet
+            best_value = 0.0
         
         # Wrap study for passing
         wrapped_study = StudyWrapper(study)
@@ -730,6 +734,52 @@ class StudyVisualizerNode:
         
         return (image, analysis)
 
+class SamplerAdapter:
+    """
+    Converts string sampler names to ComfyUI's expected combo type.
+    Bridges the gap between optimizer output and KSampler input.
+    """
+    
+    SAMPLERS = [
+        "euler", "euler_cfg_pp", "euler_ancestral", "euler_ancestral_cfg_pp",
+        "heun", "heunpp2", "dpm_2", "dpm_2_ancestral", "lms", "dpm_fast",
+        "dpm_adaptive", "dpmpp_2s_ancestral", "dpmpp_2s_ancestral_cfg_pp",
+        "dpmpp_sde", "dpmpp_sde_gpu", "dpmpp_2m", "dpmpp_2m_cfg_pp",
+        "dpmpp_2m_sde", "dpmpp_2m_sde_gpu", "dpmpp_3m_sde", "dpmpp_3m_sde_gpu",
+        "ddpm", "lcm", "ipndm", "ipndm_v", "deis", "ddim", "uni_pc", "uni_pc_bh2"
+    ]
+    
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "sampler_string": ("STRING",),
+                "fallback": (cls.SAMPLERS,),
+            }
+        }
+    
+    RETURN_TYPES = (cls.SAMPLERS,)
+    RETURN_NAMES = ("sampler_name",)
+    FUNCTION = "convert"
+    CATEGORY = "Optimization/Utility"
+    
+    def convert(self, sampler_string, fallback):
+        """Convert string to valid sampler name"""
+        # Clean the input string
+        sampler_clean = sampler_string.strip().lower()
+        
+        # Direct match
+        if sampler_clean in self.SAMPLERS:
+            return (sampler_clean,)
+        
+        # Try to find a partial match
+        for sampler in self.SAMPLERS:
+            if sampler_clean in sampler or sampler in sampler_clean:
+                return (sampler,)
+        
+        # Use fallback if no match found
+        return (fallback,)
+
 # Node class mappings for ComfyUI
 NODE_CLASS_MAPPINGS = {
     "OptimizerStateNode": OptimizerStateNode,
@@ -739,6 +789,7 @@ NODE_CLASS_MAPPINGS = {
     "TrialPassthroughNode": TrialPassthroughNode,
     "BestParametersNode": BestParametersNode,
     "StudyVisualizerNode": StudyVisualizerNode,
+    "SamplerAdapter": SamplerAdapter,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
@@ -749,4 +800,5 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "TrialPassthroughNode": "🔄 Pass Trial",
     "BestParametersNode": "🏆 Best Parameters",
     "StudyVisualizerNode": "📈 Visualize Study",
+    "SamplerAdapter": "🔄 Sampler Adapter",
 }
