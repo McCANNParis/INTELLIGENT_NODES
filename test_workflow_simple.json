@@ -1,0 +1,346 @@
+{
+  "last_node_id": 17,
+  "last_link_id": 22,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "OptimizerStateNode",
+      "pos": [50, 50],
+      "size": [315, 178],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {"name": "study", "type": "STUDY", "links": [1, 2, 3], "shape": 3},
+        {"name": "n_trials", "type": "INT", "links": null, "shape": 3},
+        {"name": "best_value", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "status", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "OptimizerStateNode"},
+      "widgets_values": ["test_optimization", "minimize", "TPE", "None", false, false]
+    },
+    {
+      "id": 2,
+      "type": "OptimizerSuggestNode",
+      "pos": [400, 50],
+      "size": [400, 200],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 1, "shape": 3}
+      ],
+      "outputs": [
+        {"name": "trial", "type": "TRIAL", "links": [4], "shape": 3},
+        {"name": "param1", "type": "FLOAT", "links": [5], "shape": 3, "slot_index": 1},
+        {"name": "param2", "type": "INT", "links": [6], "shape": 3, "slot_index": 2},
+        {"name": "param3", "type": "STRING", "links": [7], "shape": 3, "slot_index": 3},
+        {"name": "param4", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "param5", "type": "INT", "links": null, "shape": 3},
+        {"name": "param6", "type": "STRING", "links": null, "shape": 3},
+        {"name": "params_json", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "OptimizerSuggestNode"},
+      "widgets_values": [
+        "[{\"name\": \"cfg\", \"type\": \"float\", \"low\": 4.0, \"high\": 10.0}, {\"name\": \"steps\", \"type\": \"int\", \"low\": 20, \"high\": 40}, {\"name\": \"sampler\", \"type\": \"categorical\", \"choices\": [\"euler\", \"euler_ancestral\", \"dpmpp_2m\"]}]",
+        false
+      ]
+    },
+    {
+      "id": 3,
+      "type": "SamplerAdapter",
+      "pos": [850, 150],
+      "size": [210, 78],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {"name": "sampler_string", "type": "STRING", "link": 7}
+      ],
+      "outputs": [
+        {"name": "sampler_name", "type": "COMBO", "links": [8], "shape": 3, "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "SamplerAdapter"},
+      "widgets_values": ["euler"]
+    },
+    {
+      "id": 4,
+      "type": "CheckpointLoaderSimple",
+      "pos": [50, 300],
+      "size": [315, 98],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "outputs": [
+        {"name": "MODEL", "type": "MODEL", "links": [9], "shape": 3, "slot_index": 0},
+        {"name": "CLIP", "type": "CLIP", "links": [10, 11], "shape": 3, "slot_index": 1},
+        {"name": "VAE", "type": "VAE", "links": [12], "shape": 3, "slot_index": 2}
+      ],
+      "properties": {"Node name for S&R": "CheckpointLoaderSimple"},
+      "widgets_values": ["sd_xl_base_1.0.safetensors"]
+    },
+    {
+      "id": 5,
+      "type": "CLIPTextEncode",
+      "pos": [400, 300],
+      "size": [400, 100],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 10}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [13], "shape": 3, "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": ["a beautiful sunset over mountains, highly detailed, professional photography"]
+    },
+    {
+      "id": 6,
+      "type": "CLIPTextEncode",
+      "pos": [400, 430],
+      "size": [400, 100],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "clip", "type": "CLIP", "link": 11}
+      ],
+      "outputs": [
+        {"name": "CONDITIONING", "type": "CONDITIONING", "links": [14], "shape": 3, "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "CLIPTextEncode"},
+      "widgets_values": ["blurry, low quality, distorted, ugly"]
+    },
+    {
+      "id": 7,
+      "type": "EmptyLatentImage",
+      "pos": [50, 450],
+      "size": [315, 106],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [15], "shape": 3, "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "EmptyLatentImage"},
+      "widgets_values": [512, 512, 1]
+    },
+    {
+      "id": 8,
+      "type": "KSampler",
+      "pos": [850, 300],
+      "size": [315, 262],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {"name": "model", "type": "MODEL", "link": 9},
+        {"name": "positive", "type": "CONDITIONING", "link": 13},
+        {"name": "negative", "type": "CONDITIONING", "link": 14},
+        {"name": "latent_image", "type": "LATENT", "link": 15},
+        {"name": "cfg", "type": "FLOAT", "link": 5, "widget": {"name": "cfg"}},
+        {"name": "steps", "type": "INT", "link": 6, "widget": {"name": "steps"}},
+        {"name": "sampler_name", "type": "COMBO", "link": 8, "widget": {"name": "sampler_name"}}
+      ],
+      "outputs": [
+        {"name": "LATENT", "type": "LATENT", "links": [16], "shape": 3, "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "KSampler"},
+      "widgets_values": [123456, "fixed", 7, 30, "euler", "normal", 1]
+    },
+    {
+      "id": 9,
+      "type": "VAEDecode",
+      "pos": [1200, 300],
+      "size": [210, 46],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {"name": "samples", "type": "LATENT", "link": 16},
+        {"name": "vae", "type": "VAE", "link": 12}
+      ],
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [17, 18], "shape": 3, "slot_index": 0}
+      ],
+      "properties": {"Node name for S&R": "VAEDecode"}
+    },
+    {
+      "id": 10,
+      "type": "LoadImage",
+      "pos": [50, 600],
+      "size": [315, 314],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "outputs": [
+        {"name": "IMAGE", "type": "IMAGE", "links": [19], "shape": 3, "slot_index": 0},
+        {"name": "MASK", "type": "MASK", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "LoadImage"},
+      "widgets_values": ["example.png", "image"]
+    },
+    {
+      "id": 11,
+      "type": "ScoringNode",
+      "pos": [400, 600],
+      "size": [315, 198],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {"name": "generated_image", "type": "IMAGE", "link": 17},
+        {"name": "target_image", "type": "IMAGE", "link": 19}
+      ],
+      "outputs": [
+        {"name": "score", "type": "FLOAT", "links": [20], "shape": 3, "slot_index": 0},
+        {"name": "dreamsim_score", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "lpips_score", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "mse_score", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "details", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "ScoringNode"},
+      "widgets_values": ["mse", 0.3, 0.3, 0.4, true]
+    },
+    {
+      "id": 12,
+      "type": "OptimizerTellNode",
+      "pos": [750, 600],
+      "size": [315, 126],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 2},
+        {"name": "trial", "type": "TRIAL", "link": 4},
+        {"name": "score", "type": "FLOAT", "link": 20}
+      ],
+      "outputs": [
+        {"name": "study", "type": "STUDY", "links": null, "shape": 3},
+        {"name": "status", "type": "STRING", "links": [21], "shape": 3, "slot_index": 1},
+        {"name": "best_score", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "trial_number", "type": "INT", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "OptimizerTellNode"},
+      "widgets_values": [true, false]
+    },
+    {
+      "id": 13,
+      "type": "PreviewImage",
+      "pos": [1450, 300],
+      "size": [300, 246],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 18}
+      ],
+      "properties": {"Node name for S&R": "PreviewImage"}
+    },
+    {
+      "id": 14,
+      "type": "ShowText",
+      "pos": [1100, 600],
+      "size": [315, 76],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {"name": "text", "type": "STRING", "link": 21, "widget": {"name": "text"}}
+      ],
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "ShowText"},
+      "widgets_values": [""]
+    },
+    {
+      "id": 15,
+      "type": "StudyVisualizerNode",
+      "pos": [50, 950],
+      "size": [315, 126],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 3}
+      ],
+      "outputs": [
+        {"name": "plot", "type": "IMAGE", "links": [22], "shape": 3, "slot_index": 0},
+        {"name": "analysis", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "StudyVisualizerNode"},
+      "widgets_values": ["history", 800, 600]
+    },
+    {
+      "id": 16,
+      "type": "PreviewImage",
+      "pos": [400, 950],
+      "size": [400, 400],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {"name": "images", "type": "IMAGE", "link": 22}
+      ],
+      "properties": {"Node name for S&R": "PreviewImage"}
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "STUDY"],
+    [2, 1, 0, 12, 0, "STUDY"],
+    [3, 1, 0, 15, 0, "STUDY"],
+    [4, 2, 0, 12, 1, "TRIAL"],
+    [5, 2, 1, 8, 4, "FLOAT"],
+    [6, 2, 2, 8, 5, "INT"],
+    [7, 2, 3, 3, 0, "STRING"],
+    [8, 3, 0, 8, 6, "COMBO"],
+    [9, 4, 0, 8, 0, "MODEL"],
+    [10, 4, 1, 5, 0, "CLIP"],
+    [11, 4, 1, 6, 0, "CLIP"],
+    [12, 4, 2, 9, 1, "VAE"],
+    [13, 5, 0, 8, 1, "CONDITIONING"],
+    [14, 6, 0, 8, 2, "CONDITIONING"],
+    [15, 7, 0, 8, 3, "LATENT"],
+    [16, 8, 0, 9, 0, "LATENT"],
+    [17, 9, 0, 11, 0, "IMAGE"],
+    [18, 9, 0, 13, 0, "IMAGE"],
+    [19, 10, 0, 11, 1, "IMAGE"],
+    [20, 11, 0, 12, 2, "FLOAT"],
+    [21, 12, 1, 14, 0, "STRING"],
+    [22, 15, 0, 16, 0, "IMAGE"]
+  ],
+  "groups": [
+    {
+      "title": "Optimization Control",
+      "bounding": [30, -20, 1050, 270],
+      "color": "#3f789e",
+      "font_size": 24
+    },
+    {
+      "title": "Image Generation",
+      "bounding": [30, 230, 1410, 370],
+      "color": "#4b7c4b",
+      "font_size": 24
+    },
+    {
+      "title": "Scoring & Feedback Loop",
+      "bounding": [30, 530, 1420, 270],
+      "color": "#b06634",
+      "font_size": 24
+    },
+    {
+      "title": "Visualization",
+      "bounding": [30, 880, 800, 500],
+      "color": "#8b4789",
+      "font_size": 24
+    }
+  ],
+  "config": {},
+  "extra": {
+    "info": "Simple Test Workflow for Intelligent Optimization\n\nThis is a minimal test workflow to verify the intelligent nodes work correctly:\n1. Load a target image in the LoadImage node\n2. Click 'Queue Prompt' to run optimization trials\n3. Watch the status in ShowText node\n4. See optimization progress in the visualization\n\nThe system will optimize cfg, steps, and sampler to match your target image."
+  },
+  "version": 0.4
+}

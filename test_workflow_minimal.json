@@ -1,0 +1,151 @@
+{
+  "last_node_id": 8,
+  "last_link_id": 7,
+  "nodes": [
+    {
+      "id": 1,
+      "type": "OptimizerStateNode",
+      "pos": [100, 100],
+      "size": [315, 178],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "outputs": [
+        {"name": "study", "type": "STUDY", "links": [1, 2], "shape": 3},
+        {"name": "n_trials", "type": "INT", "links": [5], "shape": 3},
+        {"name": "best_value", "type": "FLOAT", "links": [6], "shape": 3},
+        {"name": "status", "type": "STRING", "links": [7], "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "OptimizerStateNode"},
+      "widgets_values": ["minimal_test", "maximize", "TPE", "None", false, false]
+    },
+    {
+      "id": 2,
+      "type": "OptimizerSuggestNode",
+      "pos": [500, 100],
+      "size": [400, 200],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 1, "shape": 3}
+      ],
+      "outputs": [
+        {"name": "trial", "type": "TRIAL", "links": [3], "shape": 3},
+        {"name": "param1", "type": "FLOAT", "links": [4], "shape": 3},
+        {"name": "param2", "type": "INT", "links": null, "shape": 3},
+        {"name": "param3", "type": "STRING", "links": null, "shape": 3},
+        {"name": "param4", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "param5", "type": "INT", "links": null, "shape": 3},
+        {"name": "param6", "type": "STRING", "links": null, "shape": 3},
+        {"name": "params_json", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "OptimizerSuggestNode"},
+      "widgets_values": [
+        "[{\"name\": \"test_param\", \"type\": \"float\", \"low\": 0.0, \"high\": 1.0}]",
+        false
+      ]
+    },
+    {
+      "id": 3,
+      "type": "OptimizerTellNode",
+      "pos": [950, 100],
+      "size": [315, 150],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {"name": "study", "type": "STUDY", "link": 2},
+        {"name": "trial", "type": "TRIAL", "link": 3},
+        {"name": "score", "type": "FLOAT", "link": 4}
+      ],
+      "outputs": [
+        {"name": "study", "type": "STUDY", "links": null, "shape": 3},
+        {"name": "status", "type": "STRING", "links": null, "shape": 3},
+        {"name": "best_score", "type": "FLOAT", "links": null, "shape": 3},
+        {"name": "trial_number", "type": "INT", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "OptimizerTellNode"},
+      "widgets_values": [true, false]
+    },
+    {
+      "id": 4,
+      "type": "ShowText",
+      "pos": [100, 350],
+      "size": [300, 100],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {"name": "text", "type": "STRING", "link": 7, "widget": {"name": "text"}}
+      ],
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "ShowText"},
+      "widgets_values": ["Status"]
+    },
+    {
+      "id": 5,
+      "type": "ShowText",
+      "pos": [450, 350],
+      "size": [200, 100],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {"name": "text", "type": "STRING", "link": 5, "widget": {"name": "text"}}
+      ],
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "ShowText"},
+      "widgets_values": ["Trials: 0"]
+    },
+    {
+      "id": 6,
+      "type": "ShowText",
+      "pos": [700, 350],
+      "size": [200, 100],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {"name": "text", "type": "STRING", "link": 6, "widget": {"name": "text"}}
+      ],
+      "outputs": [
+        {"name": "STRING", "type": "STRING", "links": null, "shape": 3}
+      ],
+      "properties": {"Node name for S&R": "ShowText"},
+      "widgets_values": ["Best: 0.0"]
+    }
+  ],
+  "links": [
+    [1, 1, 0, 2, 0, "STUDY"],
+    [2, 1, 0, 3, 0, "STUDY"],
+    [3, 2, 0, 3, 1, "TRIAL"],
+    [4, 2, 1, 3, 2, "FLOAT"],
+    [5, 1, 1, 5, 0, "INT"],
+    [6, 1, 2, 6, 0, "FLOAT"],
+    [7, 1, 3, 4, 0, "STRING"]
+  ],
+  "groups": [
+    {
+      "title": "Minimal Optimization Test",
+      "bounding": [50, 30, 1250, 250],
+      "color": "#3f789e",
+      "font_size": 24
+    },
+    {
+      "title": "Status Display",
+      "bounding": [50, 300, 900, 200],
+      "color": "#4b7c4b",
+      "font_size": 24
+    }
+  ],
+  "config": {},
+  "extra": {
+    "info": "Minimal Test - Self-Feedback Loop\n\nThis workflow tests the optimization system in isolation.\nIt uses the suggested parameter value directly as the score,\ncreating a simple optimization that should converge to 1.0.\n\nClick 'Queue Prompt' multiple times to see:\n- Trial count increase\n- Best value improve towards 1.0\n- Status messages update"
+  },
+  "version": 0.4
+}

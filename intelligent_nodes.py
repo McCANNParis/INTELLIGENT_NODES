@@ -758,7 +758,12 @@ class SamplerAdapter:
             }
         }
     
-    RETURN_TYPES = (cls.SAMPLERS,)
+    RETURN_TYPES = (["euler", "euler_cfg_pp", "euler_ancestral", "euler_ancestral_cfg_pp",
+                    "heun", "heunpp2", "dpm_2", "dpm_2_ancestral", "lms", "dpm_fast",
+                    "dpm_adaptive", "dpmpp_2s_ancestral", "dpmpp_2s_ancestral_cfg_pp",
+                    "dpmpp_sde", "dpmpp_sde_gpu", "dpmpp_2m", "dpmpp_2m_cfg_pp",
+                    "dpmpp_2m_sde", "dpmpp_2m_sde_gpu", "dpmpp_3m_sde", "dpmpp_3m_sde_gpu",
+                    "ddpm", "lcm", "ipndm", "ipndm_v", "deis", "ddim", "uni_pc", "uni_pc_bh2"],)
     RETURN_NAMES = ("sampler_name",)
     FUNCTION = "convert"
     CATEGORY = "Optimization/Utility"

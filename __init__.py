@@ -3,16 +3,33 @@ Intelligent Self-Optimizing Nodes for ComfyUI
 Transforms workflows into self-improving machines that learn with each run
 """
 
+import sys
+import traceback
+
+print("[INTELLIGENT_NODES] Starting to load Intelligent Nodes...")
+
 # Import intelligent self-optimizing nodes
 try:
+    print("[INTELLIGENT_NODES] Attempting to import from intelligent_nodes.py...")
     from .intelligent_nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS
     INTELLIGENT_AVAILABLE = True
+    print(f"[INTELLIGENT_NODES] Successfully imported {len(NODE_CLASS_MAPPINGS)} nodes")
+    print(f"[INTELLIGENT_NODES] Available nodes: {list(NODE_CLASS_MAPPINGS.keys())}")
 except ImportError as e:
     INTELLIGENT_AVAILABLE = False
     NODE_CLASS_MAPPINGS = {}
     NODE_DISPLAY_NAME_MAPPINGS = {}
-    print(f"Error loading Intelligent Nodes: {e}")
-    print("Please install required dependencies: pip install optuna torch torchvision numpy pillow matplotlib")
+    print(f"[INTELLIGENT_NODES] ERROR - Import failed: {e}")
+    print("[INTELLIGENT_NODES] Full traceback:")
+    traceback.print_exc()
+    print("[INTELLIGENT_NODES] Please install required dependencies: pip install optuna torch torchvision numpy pillow matplotlib")
+except Exception as e:
+    INTELLIGENT_AVAILABLE = False
+    NODE_CLASS_MAPPINGS = {}
+    NODE_DISPLAY_NAME_MAPPINGS = {}
+    print(f"[INTELLIGENT_NODES] ERROR - Unexpected error: {e}")
+    print("[INTELLIGENT_NODES] Full traceback:")
+    traceback.print_exc()
 
 # Version info
 __version__ = "3.0.0"
